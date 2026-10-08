@@ -90,6 +90,8 @@ font-family:"Phetsarath OT","Noto Sans Lao",Arial,sans-serif;
     display:none;
     overflow:hidden;
     background:#6fa96f;
+
+    z-index:100;
 }
 
 #worldCanvas{
@@ -241,17 +243,6 @@ font-family:"Phetsarath OT","Noto Sans Lao",Arial,sans-serif;
     }
 }
 
-#questionOverlay{
-    position:absolute;
-    inset:0;
-    z-index:100;
-    display:none;
-    align-items:center;
-    justify-content:center;
-    background:rgba(0,0,0,.72);
-    padding:20px;
-}
-
 .questionBox{
     width:min(650px,94vw);
     background:#172033;
@@ -374,23 +365,51 @@ font-family:"Phetsarath OT","Noto Sans Lao",Arial,sans-serif;
         font-size:17px;
     }
 }
+/* =========================
+   ผู้ครองเมือง
+========================= */
 #topCityPlayers{
-    position:fixed;
-    right:12px;
-    bottom:12px;
-    width:240px;
-    padding:10px;
-    background:rgba(0,0,0,.72);
-    border:1px solid rgba(255,255,255,.18);
-    border-radius:12px;
-    color:#fff;
-    font-family:"Phetsarath OT","Noto Sans Lao",sans-serif;
-    z-index:9999;
-    pointer-events:none;
-    backdrop-filter:blur(5px);
-
-    /* สำคัญ: ซ่อนตอนเริ่มต้น */
     display:none;
+
+    position:fixed;
+    right:10px;
+    bottom:10px;
+    left:auto;
+    transform:none;
+
+    width:160px;
+    padding:6px 8px;
+
+    background:rgba(0,0,0,.75);
+    border:1px solid rgba(255,255,255,.15);
+    border-radius:8px;
+
+    color:#fff;
+    font-size:12px;
+
+    z-index:200;
+    pointer-events:none;
+}
+
+/* =========================
+   QUESTION OVERLAY
+   ต้องทับทุก UI
+========================= */
+#questionOverlay{
+    position:absolute;
+    inset:0;
+
+    z-index:999999;
+
+    display:none;
+
+    align-items:center;
+    justify-content:center;
+
+    background:rgba(0,0,0,.72);
+    padding:20px;
+
+    pointer-events:auto;
 }
 
 .topCityTitle{
@@ -438,50 +457,83 @@ font-family:"Phetsarath OT","Noto Sans Lao",Arial,sans-serif;
         <h1>🌍 ເສິກຊີງບັນລັງ</h1>
         <p></p>
 
-        <input id="nameInput"
-               maxlength="30"
-               placeholder="ຊື່ຜູ້ຫຼິ້ນ">
+        <input
+            id="nameInput"
+            maxlength="30"
+            placeholder="ຊື່ຜູ້ຫຼິ້ນ"
+        >
 
-        <input id="passwordInput"
-               type="password"
-               maxlength="40"
-               placeholder="ລະຫັດຜ່ານ">
+        <input
+            id="passwordInput"
+            type="password"
+            maxlength="40"
+            placeholder="ລະຫັດຜ່ານ"
+        >
 
-        <button id="loginBtn">🚀ເຂົ້າສູ່ລະບົບ</button>
+        <button id="loginBtn">
+            🚀ເຂົ້າສູ່ລະບົບ
+        </button>
 
         <div id="loginError"></div>
     </div>
 </div>
-<div id="topCityPlayers">
-    <div class="topCityTitle">🏆 ຜູ້ຄອງເມືອງ</div>
-    <div id="topCityPlayersList"></div>
-</div>
+
+
 <!-- GAME -->
 <div id="game">
 
+    <!-- MAP -->
     <canvas id="worldCanvas"></canvas>
 
+
+    <!-- HUD -->
     <div id="hud">
         <div id="hudName">👤 -</div>
-<div id="hudLevel">⭐ Level 1</div>
+        <div id="hudLevel">⭐ Level 1</div>
         <div id="hudCity">📍 ນອກເມືອງ</div>
     </div>
 
+
+    <!-- MINIMAP -->
     <div id="miniMap">
-        <canvas id="miniCanvas" width="420" height="420"></canvas>
+        <canvas
+            id="miniCanvas"
+            width="420"
+            height="420">
+        </canvas>
     </div>
 
+
+    <!-- MESSAGE -->
     <div id="message"></div>
 
-    <!-- CONTROL : MOBILE JOYSTICK -->
+
+    <!-- MOBILE CONTROL -->
     <div id="controls">
         <div id="joystickBase">
             <div id="joystickKnob"></div>
         </div>
     </div>
 
-    <!-- QUESTION -->
+
+    <!-- 🏆 TOP CITY PLAYERS
+         อยู่ใน GAME
+         แต่ไม่อยู่ใน QUESTION OVERLAY -->
+    <div id="topCityPlayers">
+
+        <div class="topCityTitle">
+            🏆 ຜູ້ຄອງເມືອງ
+        </div>
+
+        <div id="topCityPlayersList"></div>
+
+    </div>
+
+
+    <!-- QUESTION OVERLAY
+         อยู่ชั้นบนสุดของ GAME -->
     <div id="questionOverlay">
+
         <div class="questionBox">
 
             <div class="questionTitle">
@@ -491,36 +543,75 @@ font-family:"Phetsarath OT","Noto Sans Lao",Arial,sans-serif;
             <div id="questionText"></div>
 
             <div class="answers">
-                <button class="answer" data-index="0"></button>
-                <button class="answer" data-index="1"></button>
-                <button class="answer" data-index="2"></button>
-                <button class="answer" data-index="3"></button>
+
+                <button
+                    class="answer"
+                    data-index="0">
+                </button>
+
+                <button
+                    class="answer"
+                    data-index="1">
+                </button>
+
+                <button
+                    class="answer"
+                    data-index="2">
+                </button>
+
+                <button
+                    class="answer"
+                    data-index="3">
+                </button>
+
             </div>
 
             <div id="gateHint">
-              ຕອບຖືກເພື່ອປົດລັອກປະຕູເມືອງ
+                ຕອບຖືກເພື່ອປົດລັອກປະຕູເມືອງ
             </div>
 
         </div>
+
     </div>
 
 </div>
+
 
 <!-- DEATH -->
 <div id="deathOverlay">
+
     <div class="deathBox">
+
         <h1>💀 ผู้เล่นเสียชีวิต</h1>
-        <p>สามารถกลับมาเล่นได้ใน</p>
-        <div id="deathTimer">05:00</div>
+
+        <p>
+            สามารถกลับมาเล่นได้ใน
+        </p>
+
+        <div id="deathTimer">
+            05:00
+        </div>
+
     </div>
+
 </div>
+
 
 <!-- OFFLINE -->
 <div id="offline">
+
     <div class="offlineBox">
-        <h2>⚠️ การเชื่อมต่อขาดหาย</h2>
-        <p>กำลังรอการเชื่อมต่อ Firebase...</p>
+
+        <h2>
+            ⚠️ การเชื่อมต่อขาดหาย
+        </h2>
+
+        <p>
+            กำลังรอการเชื่อมต่อ Firebase...
+        </p>
+
     </div>
+
 </div>
 
 <script>
