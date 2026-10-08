@@ -21,7 +21,7 @@ html,body{
 }
 
 button,input{
-    font-family:inherit;
+font-family:"Phetsarath OT","Noto Sans Lao",Arial,sans-serif;
 }
 
 #login{
@@ -114,6 +114,7 @@ button,input{
 }
 
 #hudName{
+font-family:"Phetsarath OT","Noto Sans Lao",Arial,sans-serif;
     font-weight:bold;
     font-size:18px;
 }
@@ -373,6 +374,59 @@ button,input{
         font-size:17px;
     }
 }
+#topCityPlayers{
+    position:fixed;
+    right:12px;
+    bottom:12px;
+    width:240px;
+    padding:10px;
+    background:rgba(0,0,0,.72);
+    border:1px solid rgba(255,255,255,.18);
+    border-radius:12px;
+    color:#fff;
+    font-family:"Phetsarath OT","Noto Sans Lao",sans-serif;
+    z-index:9999;
+    pointer-events:none;
+    backdrop-filter:blur(5px);
+
+    /* สำคัญ: ซ่อนตอนเริ่มต้น */
+    display:none;
+}
+
+.topCityTitle{
+    font-size:16px;
+    font-weight:bold;
+    text-align:center;
+    margin-bottom:7px;
+}
+
+.topCityRow{
+    display:flex;
+    align-items:center;
+    gap:7px;
+    padding:5px 4px;
+    border-top:1px solid rgba(255,255,255,.10);
+}
+
+.topCityRank{
+    width:22px;
+    font-weight:bold;
+    text-align:center;
+}
+
+.topCityName{
+    flex:1;
+    font-size:14px;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+}
+
+.topCityCount{
+    font-size:13px;
+    font-weight:bold;
+}
+
 </style>
 </head>
 
@@ -381,24 +435,27 @@ button,input{
 <!-- LOGIN -->
 <div id="login">
     <div class="loginBox">
-        <h1>🌍 2D Multiplayer</h1>
-        <p>เข้าสู่ระบบเพื่อเข้าสู่โลก 20 เมือง</p>
+        <h1>🌍 ເສິກຊີງບັນລັງ</h1>
+        <p></p>
 
         <input id="nameInput"
                maxlength="30"
-               placeholder="ชื่อผู้เล่น">
+               placeholder="ຊື່ຜູ້ຫຼິ້ນ">
 
         <input id="passwordInput"
                type="password"
                maxlength="40"
-               placeholder="รหัสผ่าน">
+               placeholder="ລະຫັດຜ່ານ">
 
-        <button id="loginBtn">🚀 เข้าสู่เกม</button>
+        <button id="loginBtn">🚀ເຂົ້າສູ່ລະບົບ</button>
 
         <div id="loginError"></div>
     </div>
 </div>
-
+<div id="topCityPlayers">
+    <div class="topCityTitle">🏆 ຜູ້ຄອງເມືອງ</div>
+    <div id="topCityPlayersList"></div>
+</div>
 <!-- GAME -->
 <div id="game">
 
@@ -407,7 +464,7 @@ button,input{
     <div id="hud">
         <div id="hudName">👤 -</div>
 <div id="hudLevel">⭐ Level 1</div>
-        <div id="hudCity">📍 นอกเมือง</div>
+        <div id="hudCity">📍 ນອກເມືອງ</div>
     </div>
 
     <div id="miniMap">
@@ -441,7 +498,7 @@ button,input{
             </div>
 
             <div id="gateHint">
-                ตอบถูกเพื่อปลดล็อกประตูเมือง
+              ຕອບຖືກເພື່ອປົດລັອກປະຕູເມືອງ
             </div>
 
         </div>
@@ -535,7 +592,9 @@ let playerId = null;
 
 const remotePlayers = {};
 const cityClaims = {};
-
+// เวลาที่แต่ละเมืองจะปลด Cooldown
+const cityCooldowns = {};
+const CITY_COOLDOWN_MS = 60000;
 let keys = {
     up:false,
     down:false,
@@ -553,26 +612,26 @@ const MOVE_SPEED = 5;
 ========================================================= */
 
 const cityNames = [
-    "เมืองที่ 01",
-    "เมืองที่ 02",
-    "เมืองที่ 03",
-    "เมืองที่ 04",
-    "เมืองที่ 05",
-    "เมืองที่ 06",
-    "เมืองที่ 07",
-    "เมืองที่ 08",
-    "เมืองที่ 09",
-    "เมืองที่ 10",
-    "เมืองที่ 11",
-    "เมืองที่ 12",
-    "เมืองที่ 13",
-    "เมืองที่ 14",
-    "เมืองที่ 15",
-    "เมืองที่ 16",
-    "เมืองที่ 17",
-    "เมืองที่ 18",
-    "เมืองที่ 19",
-    "เมืองที่ 20"
+    "ເມືອງທີ 01",
+    "ເມືອງທີ 02",
+    "ເມືອງທີ 03",
+    "ເມືອງທີ 04",
+    "ເມືອງທີ 05",
+    "ເມືອງທີ 06",
+    "ເມືອງທີ 07",
+    "ເມືອງທີ 08",
+    "ເມືອງທີ 09",
+    "ເມືອງທີ 10",
+    "ເມືອງທີ 11",
+    "ເມືອງທີ 12",
+    "ເມືອງທີ 13",
+    "ເມືອງທີ 14",
+    "ເມືອງທີ 15",
+    "ເມືອງທີ 16",
+    "ເມືອງທີ 17",
+    "ເມືອງທີ 18",
+    "ເມືອງທີ 19",
+    "ເມືອງທີ 20"
 ];
 
 const CITY_THEMES = [
@@ -960,8 +1019,7 @@ const questions = [
 { question:"Which place is 'ສວນສາທາລະນະ'?", choices:["park","zoo","home","shop"], answer:"park" },
 { question:"Which place is 'ໂຮງໝໍ'?", choices:["hospital","school","market","zoo"], answer:"hospital" },
 { question:"Which place is 'ຮ້ານ'?", choices:["shop","home","park","hospital"], answer:"shop" },
-{ question:"Which place is 'ສວນສັດ'?", choices:["zoo","park","school","market"], answer:"zoo" }
-
+{ question:"Which place is 'ສວນສັດ'?", choices:["zoo","park","school","market"], answer:"zoo" },
 ];
 
 /* =========================================================
@@ -1091,20 +1149,29 @@ async function login(){
             });
 
 
-        document.getElementById("login")
-            .style.display="none";
+document.getElementById("login")
+    .style.display = "none";
 
-        document.getElementById("game")
-            .style.display="block";
+document.getElementById("game")
+    .style.display = "block";
+
+/* แสดงกล่องผู้ครองเมืองเฉพาะตอนเข้าเกม */
+const topCityPanel =
+    document.getElementById("topCityPlayers");
+
+if(topCityPanel){
+    topCityPanel.style.display = "block";
+}
 
 
         listenPlayers();
         listenCityClaims();
+listenTopCityPlayers();
 
         resize();
 
         showMessage(
-            "เข้าสู่เกมแล้ว เดินไปที่ 🔒 ประตูเมือง"
+            "ເຂົ້າສູ່ລະບົບສຳເລັດ"
         );
 
     }catch(err){
@@ -1119,7 +1186,36 @@ async function login(){
     loginBtn.disabled = false;
 }
 
+function kickPlayerOutOfCity(city){
 
+    const margin = 25;
+
+    // จุดออกจากเมืองทางขวา
+    let newX = city.x + city.width / 2 + margin;
+    let newY = city.y;
+
+    // กันไม่ให้ออกนอกขอบจอ
+    newX = Math.max(20, Math.min(canvas.width - 20, newX));
+    newY = Math.max(20, Math.min(canvas.height - 20, newY));
+
+    // ถ้าจุดด้านขวายังอยู่ในเมือง
+    if(
+        newX >= city.x - city.width / 2 &&
+        newX <= city.x + city.width / 2 &&
+        newY >= city.y - city.height / 2 &&
+        newY <= city.y + city.height / 2
+    ){
+        newX = city.x - city.width / 2 - margin;
+
+        newX = Math.max(
+            20,
+            Math.min(canvas.width - 20, newX)
+        );
+    }
+
+    localPlayer.x = newX;
+    localPlayer.y = newY;
+}
 /* =========================================================
    FIREBASE PLAYERS
 ========================================================= */
@@ -1132,6 +1228,9 @@ function listenCityClaims(){
 
         const oldClaims = {...cityClaims};
 
+        // =========================================
+        // โหลดข้อมูลเจ้าของเมืองใหม่
+        // =========================================
         Object.keys(cityClaims).forEach(
             key => delete cityClaims[key]
         );
@@ -1143,12 +1242,59 @@ function listenCityClaims(){
             );
         }
 
-        // ตรวจสอบว่าเมืองไหนเปลี่ยนเจ้าของ
+        // =========================================
+        // ตรวจสอบทุกเมือง
+        // =========================================
         for(const city of cities){
 
             const oldClaim = oldClaims[city.id];
             const newClaim = cityClaims[city.id];
 
+            // เจ้าของคนปัจจุบันของเมือง
+            const currentOwnerId =
+                newClaim?.playerId || null;
+
+            // =========================================
+            // ถ้าผู้เล่นปัจจุบัน "ไม่ใช่เจ้าของ"
+            // แต่ยังมีสถานะ unlockedCities เป็น true
+            // ให้แก้สถานะทันที
+            // =========================================
+            if(
+                localPlayer &&
+                localPlayer.unlockedCities &&
+                localPlayer.unlockedCities[city.id] === true &&
+                currentOwnerId !== playerId
+            ){
+
+                localPlayer.unlockedCities[city.id] = false;
+
+                // =====================================
+                // ถ้าผู้เล่นยังอยู่ในเมือง
+                // ให้เตะออกทันที
+                // =====================================
+                const insideCity =
+                    localPlayer.x >= city.x - city.width / 2 &&
+                    localPlayer.x <= city.x + city.width / 2 &&
+                    localPlayer.y >= city.y - city.height / 2 &&
+                    localPlayer.y <= city.y + city.height / 2;
+
+                if(insideCity){
+
+                   kickPlayerOutOfCity(city);
+
+                    showMessage(
+                        "⚔️ " +
+                        city.name +
+                        "ຖືກຍຶດແລ້ວ! ເຈົ້າຖືກເຕະອອກຈາກເມືອງ"
+                    );
+                }
+
+                savePlayer();
+            }
+
+            // =========================================
+            // ตรวจการเปลี่ยนเจ้าของโดยตรง
+            // =========================================
             if(
                 oldClaim &&
                 newClaim &&
@@ -1157,27 +1303,7 @@ function listenCityClaims(){
                 oldClaim.playerId !== newClaim.playerId
             ){
 
-                // ถ้าผู้เล่นปัจจุบันคือเจ้าของเก่า
-                if(oldClaim.playerId === playerId){
-
-                    // เด้งออกนอกเมืองทันที
-                    localPlayer.x = city.x + city.width / 2;
-                    localPlayer.y = city.y + city.height + 120;
-
-                    // ล็อกเมืองนี้สำหรับผู้เล่นเดิม
-                    localPlayer.unlockedCities =
-                        localPlayer.unlockedCities || {};
-
-                    localPlayer.unlockedCities[city.id] = false;
-
-                    savePlayer();
-
-                    showMessage(
-                        "⚔️ " +
-                        city.name +
-                        " ถูกยึดแล้ว! คุณถูกส่งออกนอกเมือง"
-                    );
-                }
+                // ผู้เล่นปัจจุบันคือเจ้าของเก่า
             }
         }
 
@@ -1575,27 +1701,47 @@ function nearGate(city,x,y){
 }
 
 function wouldEnterLockedCity(x, y){
-
     if(!localPlayer) return false;
 
     for(const city of cities){
 
-        // เมืองของเรา เดินผ่านได้ทันที
+        // เมืองของตัวเอง เข้าได้
         if(isMyCity(city.id)){
             continue;
         }
 
-        // ไม่ได้อยู่ในพื้นที่เมือง
+        // ต้องอยู่ในพื้นที่เมืองก่อน
         if(!pointInsideCityShape(city, x, y)){
             continue;
         }
 
-        // บริเวณประตู ให้ผ่านไปตรวจคำถามที่ checkGate()
+        // ถ้าเป็นบริเวณประตู/แม่กุญแจ
         if(nearGate(city, x, y)){
+
+            // ถ้าเมืองนี้กำลังติด Cooldown
+            const cooldownUntil = cityCooldowns[city.id] || 0;
+
+            if(Date.now() < cooldownUntil){
+                return true;
+            }
+
+            // เมืองยังไม่ถูกยึด → ประตูต้องถูกล็อก
+            return true;
+        }
+
+        // ถ้าอยู่ในเมืองอยู่แล้ว อนุญาตให้ออก
+        const wasInside =
+            pointInsideCityShape(
+                city,
+                localPlayer.x,
+                localPlayer.y
+            );
+
+        if(wasInside){
             continue;
         }
 
-        // เมืองของคนอื่น ห้ามเข้า
+        // พยายามเข้าพื้นที่เมืองที่ไม่ใช่ของตัวเอง
         return true;
     }
 
@@ -1622,17 +1768,35 @@ function checkGate(){
         return;
     }
 
-for(const city of cities){
+    for(const city of cities){
 
-// เมืองของเรา เดินผ่านได้
-if(
-    localPlayer &&
-    localPlayer.unlockedCities &&
-    localPlayer.unlockedCities[city.id] === true
-){
+        // =========================================
+        // ตรวจเจ้าของเมืองจาก cityClaims โดยตรง
+        // ห้ามใช้ unlockedCities เป็นตัวตัดสิน
+        // =========================================
+        const claim = cityClaims[city.id];
+
+        const isOwner =
+            claim &&
+            claim.playerId === playerId;
+
+        // เมืองที่เราเป็นเจ้าของจริง
+        // เดินผ่านได้ และไม่ต้องตอบคำถาม
+        if(isOwner){
+            continue;
+        }
+// =========================================
+// COOLDOWN
+// เมืองที่เพิ่งตอบผิดยังห้ามตอบคำถาม
+// =========================================
+const cooldownUntil =
+    cityCooldowns[city.id] || 0;
+
+if(Date.now() < cooldownUntil){
+
+    // ยังอยู่ในช่วง Cooldown
     continue;
 }
-
         // =========================================
         // ตรวจระยะประตู
         // =========================================
@@ -1678,7 +1842,8 @@ if(
         }
 
         // =========================================
-        // เปิดคำถามเฉพาะเมืองที่ยังไม่ได้ยึด
+        // เมืองของคนอื่น / เมืองที่ยังไม่มีเจ้าของ
+        // ต้องตอบคำถาม
         // =========================================
         openGateQuestion(city);
 
@@ -1950,7 +2115,7 @@ async function answerGate(index, correct){
             if(hint){
 
                 hint.textContent =
-                    "✅ ถูกต้อง! " +
+                    "✅ ຖືກຕ້ອງ! " +
                     gateCorrectCount +
                     " / " +
                     requiredQuestions +
@@ -1959,9 +2124,9 @@ async function answerGate(index, correct){
             }
 
             showMessage(
-                "✅ ตอบถูก! เหลืออีก " +
+                "✅ ຕອບຖືກ! ເຫຼືອອີກ " +
                 (requiredQuestions - gateCorrectCount) +
-                " ข้อ"
+                " ຂໍ້"
             );
 
 
@@ -2082,9 +2247,9 @@ button.innerHTML =
                 if(hint){
 
                     hint.textContent =
-                        "ตอบให้ครบ " +
+                        "ຕອບໃຫ້ຄົບ " +
                         requiredQuestions +
-                        " ข้อ เพื่อพิชิตเมือง";
+                        " ຂໍ້ ເພື່ອຍຶດເມືອງ";
 
                 }
 
@@ -2426,24 +2591,30 @@ cityClaims[city.id] = {
 
     if(hint){
         hint.textContent =
-            "❌ ตอบผิด!";
+            "❌ ຕອບຜິດ!";
     }
 
 
     showMessage(
-        "❌ ตอบผิด! คุณถูกส่งออกนอกเมือง"
+        "❌ ຕອບຜິດ! ຖືກເຕະອອກຈາກເມືອງ"
     );
 
 
     /*
        ปิดคำถาม
     */
-    lastAnsweredGateId = city.id;
+lastAnsweredGateId = city.id;
 
-    gateCooldownUntil =
-        Date.now() + 1200;
+gateCooldownUntil =
+    Date.now() + 1200;
 
-    questionOpen = false;
+// ========================================
+// COOLDOWN เมืองที่ตอบผิด 60 วินาที
+// ========================================
+cityCooldowns[city.id] =
+    Date.now() + 60000;
+
+questionOpen = false;
 
     currentGate = null;
 
@@ -2612,7 +2783,7 @@ cityClaims[city.id] = {
 
 
     showMessage(
-        "❌ ตอบผิด! คุณถูกส่งออกนอก " +
+        "❌ ຕອບຜິດ! ຖືກເຕະອອກຈາກເມືອງ" +
         city.name
     );
 
@@ -3254,31 +3425,73 @@ function drawCity(city){
        ชื่อเมือง
     ===================================================== */
 
+ctx.textAlign = "center";
+
+ctx.font =
+    'bold 28px "Phetsarath OT","Noto Sans Lao",Arial,sans-serif';
+
+ctx.fillStyle =
+    "white";
+
+ctx.strokeStyle =
+    "rgba(0,0,0,.8)";
+
+ctx.lineWidth = 6;
+
+ctx.strokeText(
+    city.name,
+    city.x,
+    city.y - 195
+);
+
+ctx.fillText(
+    city.name,
+    city.x,
+    city.y - 195
+);
+/* =====================================================
+   COOLDOWN เมืองที่ตอบผิด
+===================================================== */
+
+const cooldownUntil =
+    cityCooldowns[city.id] || 0;
+
+if(cooldownUntil > Date.now()){
+
+    const seconds =
+        Math.ceil(
+            (cooldownUntil - Date.now()) / 1000
+        );
+
     ctx.textAlign = "center";
 
+    ctx.textBaseline = "middle";
+
     ctx.font =
-        "bold 28px Arial";
+        'bold 24px "Phetsarath OT","Noto Sans Lao",Arial,sans-serif';
 
     ctx.fillStyle =
-        "white";
+        "#ff5252";
 
     ctx.strokeStyle =
-        "rgba(0,0,0,.8)";
+        "rgba(0,0,0,.9)";
 
-    ctx.lineWidth = 6;
+    ctx.lineWidth = 5;
 
     ctx.strokeText(
-        city.name,
+        "⏳ " + seconds + "s",
         city.x,
-        city.y - 195
+        city.y - 155
     );
 
     ctx.fillText(
-        city.name,
+        "⏳ " + seconds + "s",
         city.x,
-        city.y - 195
+        city.y - 155
     );
 
+    ctx.textBaseline = "alphabetic";
+}
 
     /* =====================================================
        เจ้าของเมือง
@@ -3448,13 +3661,13 @@ function drawGate(city){
        ข้อความ
     */
 
-    ctx.font =
-        "bold 16px Arial";
+ctx.font =
+    "bold 16px 'Phetsarath OT', 'Noto Sans Lao', sans-serif";
 
     ctx.fillText(
         unlocked
-        ? "เปิดแล้ว"
-        : "ตอบคำถาม",
+        ? "ເປີດແລ້ວ"
+        : "ຕອບຄໍາຖາມ",
         g.x,
         top + 56
     );
@@ -3683,7 +3896,7 @@ const claimedByOther =
     }else{
 
         hud.textContent =
-            "📍 นอกเมือง";
+            "📍 ນອກເມືອງ";
 
     }
 
@@ -4340,11 +4553,127 @@ resize();
 
 requestAnimationFrame(loop);
 function isMyCity(cityId){
-    return !!(
-        localPlayer &&
-        localPlayer.unlockedCities &&
-        localPlayer.unlockedCities[cityId] === true
-    );
+    return cityClaims[cityId]?.playerId === playerId;
+}
+function listenTopCityPlayers(){
+
+    const playersRef = ref(db, "players");
+
+    onValue(playersRef, snapshot => {
+
+        const data = snapshot.val() || {};
+
+        const ranking = Object.entries(data)
+            .map(([id, player]) => {
+
+                const unlocked = player.unlockedCities || {};
+
+                const cityCount =
+                    Object.values(unlocked)
+                        .filter(value => value === true)
+                        .length;
+
+                let status = "ອອນລາຍ";
+
+                if(player.dead === true){
+                    status = "💀 ຕາຍ";
+                }
+                else if(player.online === false){
+                    status = "⚫ ອອບລາຍ";
+                }
+
+                return {
+                    id,
+                    name:
+                        player.name ||
+                        player.username ||
+                        "Unknown",
+
+                    cityCount,
+                    status
+                };
+            })
+            .sort((a,b) => {
+
+                if(b.cityCount !== a.cityCount){
+                    return b.cityCount - a.cityCount;
+                }
+
+                return a.name.localeCompare(b.name);
+            })
+            .slice(0,5);
+
+        const container =
+            document.getElementById("topCityPlayersList");
+
+        if(!container) return;
+
+        container.innerHTML = "";
+
+        ranking.forEach((player,index) => {
+
+            const row =
+                document.createElement("div");
+
+            row.className = "topCityRow";
+
+            row.innerHTML = `
+                <div class="topCityRank">
+                    ${index + 1}
+                </div>
+
+                <div class="topCityName">
+                    ${player.name}
+                </div>
+
+                <div class="topCityCount">
+                    🏙️ ${player.cityCount}
+                </div>
+
+                <div class="topCityStatus">
+                    ${player.status}
+                </div>
+            `;
+
+            container.appendChild(row);
+        });
+    });
+}
+function updateTopCityPlayers(){
+
+    const panel =
+        document.getElementById("topCityPlayers");
+
+    if(!panel) return;
+
+    const login =
+        document.getElementById("login");
+
+    const game =
+        document.getElementById("game");
+
+    const inGame =
+        game &&
+        game.style.display === "block";
+
+    const inLogin =
+        login &&
+        login.style.display !== "none";
+
+    /* =========================
+       อยู่หน้า Login
+       ========================= */
+    if(inLogin || !inGame){
+
+        panel.style.display = "none";
+
+        return;
+    }
+
+    /* =========================
+       อยู่หน้า Game
+       ========================= */
+    panel.style.display = "block";
 }
 </script>
 
