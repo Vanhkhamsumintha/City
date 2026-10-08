@@ -369,47 +369,109 @@ font-family:"Phetsarath OT","Noto Sans Lao",Arial,sans-serif;
    ผู้ครองเมือง
 ========================= */
 #topCityPlayers{
-    display:none;
-
     position:fixed;
     right:8px;
     bottom:8px;
-    left:auto;
-    transform:none;
 
-    width:140px;
-    max-width:calc(100vw - 16px);
-    padding:6px 8px;
+    width:42px;
+    height:42px;
 
-    background:rgba(0,0,0,.78);
-    border:1px solid rgba(255,255,255,.18);
-    border-radius:8px;
+    background:rgba(0,0,0,.75);
+    border:1px solid rgba(255,255,255,.2);
+    border-radius:10px;
 
     color:#fff;
-    font-size:11px;
 
     z-index:200;
     cursor:pointer;
-
-    /* สำคัญ: ให้กดได้ */
     pointer-events:auto;
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
 
     transition:
         width .2s ease,
-        padding .2s ease,
-        font-size .2s ease;
+        height .2s ease,
+        padding .2s ease;
 }
 
-/* เมื่อกดเปิด */
+/* ปุ่ม 👑 */
+#topCityButton{
+    width:100%;
+    height:100%;
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
+
+    font-size:20px;
+}
+
+/* ข้อมูล ซ่อนไว้ตอนปกติ */
+#topCityInfo{
+    display:none;
+}
+
+
+/* =========================
+   ตอนกดเปิด
+========================= */
+
 #topCityPlayers.expanded{
     width:280px;
-    max-width:calc(100vw - 16px);
-    padding:12px;
+    height:auto;
 
-    font-size:14px;
-
+    min-height:80px;
     max-height:50vh;
+
+    padding:10px;
+
+    display:block;
     overflow-y:auto;
+}
+
+#topCityPlayers.expanded #topCityButton{
+    height:28px;
+    justify-content:flex-end;
+
+    font-size:16px;
+}
+
+#topCityPlayers.expanded #topCityInfo{
+    display:block;
+}
+
+
+/* =========================
+   มือถือ
+========================= */
+
+@media(max-width:600px){
+
+    #topCityPlayers{
+        right:6px;
+        bottom:6px;
+
+        width:40px;
+        height:40px;
+    }
+
+    #topCityPlayers.expanded{
+        width:calc(100vw - 20px);
+        right:10px;
+        bottom:10px;
+
+        padding:10px;
+    }
+
+    #topCityButton{
+        font-size:19px;
+    }
+
+    #topCityPlayers.expanded #topCityButton{
+        font-size:16px;
+    }
 }
 
 /* =========================
@@ -465,26 +527,6 @@ font-family:"Phetsarath OT","Noto Sans Lao",Arial,sans-serif;
 .topCityCount{
     font-size:13px;
     font-weight:bold;
-}
-@media (max-width:600px){
-
-    #topCityPlayers{
-        width:135px;
-        right:6px;
-        bottom:6px;
-        font-size:10px;
-    }
-
-    #topCityPlayers.expanded{
-        width:calc(100vw - 20px);
-        right:10px;
-        bottom:10px;
-
-        padding:14px;
-        font-size:15px;
-
-        border-radius:12px;
-    }
 }
 </style>
 </head>
