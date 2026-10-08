@@ -1,0 +1,4352 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>2D Multiplayer City Gate - Random Questions</title>
+
+<style>
+*{
+    box-sizing:border-box;
+    user-select:none;
+}
+
+html,body{
+    margin:0;
+    width:100%;
+    height:100%;
+    overflow:hidden;
+    font-family:"Phetsarath OT","Noto Sans Lao",Arial,sans-serif;
+    background:#111;
+}
+
+button,input{
+    font-family:inherit;
+}
+
+#login{
+    position:fixed;
+    inset:0;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:
+        radial-gradient(circle at 20% 20%,#4967ff,#171b45 45%,#090b18);
+    z-index:1000;
+}
+
+.loginBox{
+    width:min(430px,90vw);
+    padding:35px;
+    border-radius:25px;
+    background:rgba(255,255,255,.12);
+    border:2px solid rgba(255,255,255,.3);
+    box-shadow:0 20px 70px rgba(0,0,0,.45);
+    text-align:center;
+    color:white;
+}
+
+.loginBox h1{
+    margin:0 0 10px;
+    font-size:32px;
+}
+
+.loginBox p{
+    opacity:.8;
+}
+
+.loginBox input{
+    width:100%;
+    padding:16px;
+    margin:8px 0;
+    border:0;
+    border-radius:12px;
+    font-size:18px;
+    outline:none;
+}
+
+.loginBox button{
+    width:100%;
+    margin-top:12px;
+    padding:16px;
+    border:0;
+    border-radius:14px;
+    background:#20d46b;
+    color:white;
+    font-size:20px;
+    font-weight:bold;
+    cursor:pointer;
+}
+
+#loginError{
+    color:#ff8d8d;
+    min-height:25px;
+    margin-top:10px;
+}
+
+#game{
+    position:fixed;
+    inset:0;
+    display:none;
+    overflow:hidden;
+    background:#6fa96f;
+}
+
+#worldCanvas{
+    position:absolute;
+    inset:0;
+    width:100%;
+    height:100%;
+    display:block;
+}
+
+#hud{
+    position:absolute;
+    top:15px;
+    left:15px;
+    z-index:20;
+    color:white;
+    background:rgba(0,0,0,.65);
+    border:2px solid rgba(255,255,255,.25);
+    border-radius:15px;
+    padding:12px 16px;
+    min-width:190px;
+}
+
+#hudName{
+    font-weight:bold;
+    font-size:18px;
+}
+
+#hudCity{
+    margin-top:4px;
+    color:#ffe66d;
+}
+
+#miniMap{
+    position:absolute;
+    right:15px;
+    top:15px;
+    width:210px;
+    height:210px;
+    background:#15251a;
+    border:3px solid white;
+    border-radius:14px;
+    overflow:hidden;
+    z-index:20;
+}
+
+#miniCanvas{
+    width:100%;
+    height:100%;
+    display:block;
+}
+
+#message{
+    position:absolute;
+    left:50%;
+    top:18px;
+    transform:translateX(-50%);
+    z-index:30;
+    background:rgba(0,0,0,.7);
+    color:white;
+    padding:10px 20px;
+    border-radius:20px;
+    font-size:16px;
+    opacity:0;
+    transition:.2s;
+    pointer-events:none;
+}
+
+#message.show{
+    opacity:1;
+}
+
+#controls{
+    position:absolute;
+    left:24px;
+    bottom:24px;
+    z-index:25;
+    width:150px;
+    height:150px;
+    touch-action:none;
+    user-select:none;
+    -webkit-user-select:none;
+}
+
+#joystickBase{
+    position:absolute;
+    left:0;
+    top:0;
+    width:150px;
+    height:150px;
+    border-radius:50%;
+    border:3px solid rgba(255,255,255,.45);
+    background:rgba(0,0,0,.38);
+    box-shadow:
+        0 8px 25px rgba(0,0,0,.35),
+        inset 0 0 0 12px rgba(255,255,255,.06);
+    touch-action:none;
+}
+
+#joystickKnob{
+    position:absolute;
+    left:50%;
+    top:50%;
+    width:66px;
+    height:66px;
+    margin-left:-33px;
+    margin-top:-33px;
+    border-radius:50%;
+    border:3px solid rgba(255,255,255,.75);
+    background:rgba(22,140,255,.78);
+    box-shadow:0 5px 18px rgba(0,0,0,.4);
+    pointer-events:none;
+    transform:translate(0,0);
+}
+
+#joystickBase::after{
+    content:"";
+    position:absolute;
+    left:50%;
+    top:50%;
+    width:10px;
+    height:10px;
+    margin-left:-5px;
+    margin-top:-5px;
+    border-radius:50%;
+    background:rgba(255,255,255,.35);
+    pointer-events:none;
+}
+
+@media (max-width:600px){
+    #controls{
+        left:18px;
+        bottom:18px;
+        width:170px;
+        height:170px;
+    }
+
+    #joystickBase{
+        width:170px;
+        height:170px;
+    }
+
+    #joystickKnob{
+        width:72px;
+        height:72px;
+        margin-left:-36px;
+        margin-top:-36px;
+    }
+}
+
+#questionOverlay{
+    position:absolute;
+    inset:0;
+    z-index:100;
+    display:none;
+    align-items:center;
+    justify-content:center;
+    background:rgba(0,0,0,.72);
+    padding:20px;
+}
+
+.questionBox{
+    width:min(650px,94vw);
+    background:#172033;
+    color:white;
+    border:3px solid #ffd54a;
+    border-radius:25px;
+    padding:25px;
+    box-shadow:0 20px 70px rgba(0,0,0,.7);
+}
+
+.questionTitle{
+    text-align:center;
+    color:#ffd54a;
+    font-size:25px;
+    font-weight:bold;
+    margin-bottom:12px;
+}
+
+#questionText{
+    background:#25334e;
+    border-radius:15px;
+    padding:20px;
+    font-size:22px;
+    line-height:1.5;
+    text-align:center;
+    margin-bottom:15px;
+}
+
+.answers{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:12px;
+}
+
+.answer{
+    min-height:65px;
+    border:2px solid #53627e;
+    border-radius:14px;
+    background:#263552;
+    color:white;
+    font-size:19px;
+    padding:12px;
+    cursor:pointer;
+}
+
+.answer:hover{
+    background:#344a70;
+}
+
+.answer.correct{
+    background:#159447;
+    border-color:#55f09a;
+}
+
+.answer.wrong{
+    background:#b82d3a;
+    border-color:#ff7c87;
+}
+
+#gateHint{
+    text-align:center;
+    margin-top:12px;
+    color:#aaa;
+}
+
+#deathOverlay,
+#offline{
+    position:fixed;
+    inset:0;
+    display:none;
+    align-items:center;
+    justify-content:center;
+    z-index:900;
+    background:rgba(0,0,0,.82);
+    color:white;
+    text-align:center;
+}
+
+.deathBox{
+    padding:35px;
+    background:#24131a;
+    border:3px solid #ff5252;
+    border-radius:25px;
+}
+
+#deathTimer{
+    font-size:45px;
+    color:#ff7777;
+    font-weight:bold;
+}
+
+.offlineBox{
+    padding:30px;
+    background:#191919;
+    border:2px solid #ffb52e;
+    border-radius:20px;
+}
+
+@media(max-width:600px){
+    #miniMap{
+        width:145px;
+        height:145px;
+    }
+
+    #hud{
+        font-size:13px;
+        min-width:150px;
+    }
+
+    .answers{
+        grid-template-columns:1fr;
+    }
+
+    #questionText{
+        font-size:18px;
+    }
+
+    .answer{
+        min-height:55px;
+        font-size:17px;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<!-- LOGIN -->
+<div id="login">
+    <div class="loginBox">
+        <h1>🌍 2D Multiplayer</h1>
+        <p>เข้าสู่ระบบเพื่อเข้าสู่โลก 20 เมือง</p>
+
+        <input id="nameInput"
+               maxlength="30"
+               placeholder="ชื่อผู้เล่น">
+
+        <input id="passwordInput"
+               type="password"
+               maxlength="40"
+               placeholder="รหัสผ่าน">
+
+        <button id="loginBtn">🚀 เข้าสู่เกม</button>
+
+        <div id="loginError"></div>
+    </div>
+</div>
+
+<!-- GAME -->
+<div id="game">
+
+    <canvas id="worldCanvas"></canvas>
+
+    <div id="hud">
+        <div id="hudName">👤 -</div>
+<div id="hudLevel">⭐ Level 1</div>
+        <div id="hudCity">📍 นอกเมือง</div>
+    </div>
+
+    <div id="miniMap">
+        <canvas id="miniCanvas" width="420" height="420"></canvas>
+    </div>
+
+    <div id="message"></div>
+
+    <!-- CONTROL : MOBILE JOYSTICK -->
+    <div id="controls">
+        <div id="joystickBase">
+            <div id="joystickKnob"></div>
+        </div>
+    </div>
+
+    <!-- QUESTION -->
+    <div id="questionOverlay">
+        <div class="questionBox">
+
+            <div class="questionTitle">
+                🔒 ประตูเมือง
+            </div>
+
+            <div id="questionText"></div>
+
+            <div class="answers">
+                <button class="answer" data-index="0"></button>
+                <button class="answer" data-index="1"></button>
+                <button class="answer" data-index="2"></button>
+                <button class="answer" data-index="3"></button>
+            </div>
+
+            <div id="gateHint">
+                ตอบถูกเพื่อปลดล็อกประตูเมือง
+            </div>
+
+        </div>
+    </div>
+
+</div>
+
+<!-- DEATH -->
+<div id="deathOverlay">
+    <div class="deathBox">
+        <h1>💀 ผู้เล่นเสียชีวิต</h1>
+        <p>สามารถกลับมาเล่นได้ใน</p>
+        <div id="deathTimer">05:00</div>
+    </div>
+</div>
+
+<!-- OFFLINE -->
+<div id="offline">
+    <div class="offlineBox">
+        <h2>⚠️ การเชื่อมต่อขาดหาย</h2>
+        <p>กำลังรอการเชื่อมต่อ Firebase...</p>
+    </div>
+</div>
+
+<script>
+window.MathJax = {
+  tex: { inlineMath: [["\\(", "\\)"]] },
+  startup: { typeset: false }
+};
+</script>
+<script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
+
+<script type="module">
+
+import {
+    initializeApp
+} from "https://www.gstatic.com/firebasejs/12.18.0/firebase-app.js";
+
+import {
+    getDatabase,
+    ref,
+    get,
+    set,
+    update,
+    onValue,
+    onDisconnect
+} from "https://www.gstatic.com/firebasejs/12.18.0/firebase-database.js";
+
+
+/* =========================================================
+   FIREBASE
+========================================================= */
+
+const firebaseConfig = {
+    apiKey:"AIzaSyBlzB237rYRo_8Cps8PuCFwwNisUqvTAMo",
+    authDomain:"big-map-3f3e4.firebaseapp.com",
+    databaseURL:"https://big-map-3f3e4-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId:"big-map-3f3e4",
+    storageBucket:"big-map-3f3e4.firebasestorage.app",
+    messagingSenderId:"636900584872",
+    appId:"1:636900584872:web:67bab17f5e9e2f1f97419d"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+
+
+/* =========================================================
+   CANVAS
+========================================================= */
+
+const canvas = document.getElementById("worldCanvas");
+const ctx = canvas.getContext("2d");
+
+const miniCanvas = document.getElementById("miniCanvas");
+const mctx = miniCanvas.getContext("2d");
+
+
+/* =========================================================
+   WORLD
+========================================================= */
+
+const WORLD_SIZE = 3000;
+const HALF = WORLD_SIZE / 2;
+
+let cameraX = 0;
+let cameraY = 0;
+
+let localPlayer = null;
+let playerId = null;
+
+const remotePlayers = {};
+const cityClaims = {};
+
+let keys = {
+    up:false,
+    down:false,
+    left:false,
+    right:false
+};
+
+let lastActivity = Date.now();
+
+const MOVE_SPEED = 10;
+
+
+/* =========================================================
+   20 CITIES
+========================================================= */
+
+const cityNames = [
+    "เมืองที่ 01",
+    "เมืองที่ 02",
+    "เมืองที่ 03",
+    "เมืองที่ 04",
+    "เมืองที่ 05",
+    "เมืองที่ 06",
+    "เมืองที่ 07",
+    "เมืองที่ 08",
+    "เมืองที่ 09",
+    "เมืองที่ 10",
+    "เมืองที่ 11",
+    "เมืองที่ 12",
+    "เมืองที่ 13",
+    "เมืองที่ 14",
+    "เมืองที่ 15",
+    "เมืองที่ 16",
+    "เมืองที่ 17",
+    "เมืองที่ 18",
+    "เมืองที่ 19",
+    "เมืองที่ 20"
+];
+
+const CITY_THEMES = [
+    {shape:"square",    color:"#4e79a7", accent:"#8fd3ff", deco:"towers",  anim:"pulse"},
+    {shape:"circle",    color:"#59a14f", accent:"#b6ff8a", deco:"trees",   anim:"orbit"},
+    {shape:"hex",       color:"#f28e2b", accent:"#ffd27a", deco:"spires",  anim:"spin"},
+    {shape:"diamond",   color:"#e15759", accent:"#ff9b9b", deco:"crystals",anim:"float"},
+    {shape:"octagon",   color:"#b07aa1", accent:"#f2b9e7", deco:"rings",   anim:"pulse"},
+    {shape:"rounded",   color:"#76b7b2", accent:"#9efff5", deco:"water",   anim:"wave"},
+    {shape:"castle",    color:"#edc949", accent:"#fff1a6", deco:"flags",   anim:"wave"},
+    {shape:"flower",    color:"#af7aa1", accent:"#ffc4f4", deco:"petals",  anim:"orbit"},
+    {shape:"triangle",  color:"#59a14f", accent:"#d8ff8c", deco:"forest",  anim:"float"},
+    {shape:"cross",     color:"#4e79a7", accent:"#b7ddff", deco:"lights",  anim:"blink"},
+    {shape:"shield",    color:"#f28e2b", accent:"#ffe0a8", deco:"flames",  anim:"wave"},
+    {shape:"star",      color:"#e15759", accent:"#ffc0c0", deco:"stars",   anim:"spin"},
+    {shape:"pill",      color:"#9c755f", accent:"#e9c4ad", deco:"pipes",   anim:"pulse"},
+    {shape:"arch",      color:"#bab0ab", accent:"#ffffff", deco:"lamps",   anim:"blink"},
+    {shape:"gear",      color:"#86bc86", accent:"#d1ffd1", deco:"gears",   anim:"spin"},
+    {shape:"wave",      color:"#5da5da", accent:"#bde8ff", deco:"water",   anim:"wave"},
+    {shape:"sun",       color:"#f6bd16", accent:"#fff0a0", deco:"rays",    anim:"pulse"},
+    {shape:"moon",      color:"#7b68b2", accent:"#d8c9ff", deco:"moons",   anim:"orbit"},
+    {shape:"leaf",      color:"#2ca02c", accent:"#a7ff9d", deco:"leaves",  anim:"float"},
+    {shape:"diamond2",  color:"#17becf", accent:"#a8faff", deco:"energy",  anim:"blink"}
+];
+
+const cities = [];
+
+const startX = -1125;
+const startY = -1125;
+
+for(let row=0; row<5; row++){
+
+    for(let col=0; col<4; col++){
+
+        const index = row * 4 + col;
+
+        cities.push({
+            id:index,
+            name:cityNames[index],
+
+            level:index + 1,
+
+            x:startX + col*750,
+            y:startY + row*560,
+
+            width:500,
+            height:500,
+
+            gate:{
+                x:startX + col*750,
+                y:(startY + row*560) + 250,
+                width:120,
+                height:65
+            },
+
+            color:CITY_THEMES[index % CITY_THEMES.length].color,
+            theme:CITY_THEMES[index % CITY_THEMES.length].shape,
+
+            unlocked:false,
+            captureCount:0
+        });
+
+    }
+}
+
+
+/* =========================================================
+   QUESTIONS
+========================================================= */
+
+const questions = [
+{ question:"What does 'Hi!' mean?", choices:["ສະບາຍດີ","ລາກ່ອນ","ຂອບໃຈ","ຂໍໂທດ"], answer:"ສະບາຍດີ" },
+{ question:"What does 'Hello!' mean?", choices:["ລາກ່ອນ","ສະບາຍດີ","ແລ້ວພົບກັນ","ຍິນດີ"], answer:"ສະບາຍດີ" },
+{ question:"Which greeting is used in the morning?", choices:["Good evening!","Good afternoon!","Good morning!","Goodbye!"], answer:"Good morning!" },
+{ question:"Which greeting means ສະບາຍດີຕອນບ່າຍ?", choices:["Good morning!","Good afternoon!","Good evening!","Goodbye!"], answer:"Good afternoon!" },
+{ question:"Which greeting means ສະບາຍດີຕອນແລງ?", choices:["Good evening!","Good morning!","Hello!","See you soon!"], answer:"Good evening!" },
+{ question:"What does 'Goodbye!' mean?", choices:["ສະບາຍດີ","ລາກ່ອນ","ຍິນດີ","ແລ້ວພົບກັນ"], answer:"ລາກ່ອນ" },
+{ question:"What does 'See you soon!' mean?", choices:["ລາກ່ອນ","ແລ້ວພົບກັນໃໝ່","ສະບາຍດີຕອນເຊົ້າ","ຍິນດີ"], answer:"ແລ້ວພົບກັນໃໝ່" },
+{ question:"What does 'Nice to meet you.' mean?", choices:["ລາກ່ອນ","ຍິນດີທີ່ໄດ້ພົບເຈົ້າ","ເຈົ້າຊື່ຫຍັງ?","ແລ້ວພົບກັນ"], answer:"ຍິນດີທີ່ໄດ້ພົບເຈົ້າ" },
+{ question:"What is the correct reply to 'Nice to meet you.'?", choices:["Goodbye!","Nice to meet you, too.","Good morning!","I am ten."], answer:"Nice to meet you, too." },
+{ question:"A: Hello! B: ____", choices:["Hello!","Goodbye!","I'm ten.","Blue."], answer:"Hello!" },
+{ question:"A: Good morning! B: ____", choices:["Good evening!","Good morning!","Goodbye!","See you soon!"], answer:"Good morning!" },
+{ question:"A: Hi! B: ____", choices:["Hi!","Goodbye!","I'm Jack.","Ten."], answer:"Hi!" },
+{ question:"A: Goodbye! B: ____", choices:["Hello!","Good morning!","See you soon!","Nice color!"], answer:"See you soon!" },
+{ question:"Which phrase is used when saying goodbye?", choices:["Hello!","Hi!","Goodbye!","Nice to meet you."], answer:"Goodbye!" },
+{ question:"Which phrase can be used when meeting someone?", choices:["Nice to meet you.","Goodbye!","See you soon!","Goodbye!"], answer:"Nice to meet you." },
+{ question:"Which word means ສະບາຍດີ?", choices:["Hello","Goodbye","Soon","Meet"], answer:"Hello" },
+{ question:"Which word means ລາກ່ອນ?", choices:["Hello","Goodbye","Morning","Meet"], answer:"Goodbye" },
+{ question:"Complete: Good ____!", choices:["morning","name","age","color"], answer:"morning" },
+{ question:"Complete: See you ____!", choices:["blue","soon","book","old"], answer:"soon" },
+{ question:"How do you ask someone's name?", choices:["How old are you?","What's your name?","What do you like?","Where are you?"], answer:"What's your name?" },
+{ question:"What does 'What's your name?' mean?", choices:["ເຈົ້າອາຍຸເທົ່າໃດ?","ເຈົ້າຊື່ຫຍັງ?","ເຈົ້າຢູ່ໃສ?","ເຈົ້າມັກຫຍັງ?"], answer:"ເຈົ້າຊື່ຫຍັງ?" },
+{ question:"What is the correct answer to 'What's your name?'", choices:["I'm ten years old.","My name is Jack.","I like football.","I am happy."], answer:"My name is Jack." },
+{ question:"Which is another short way to say 'My name is Jack.'?", choices:["I'm Jack.","I Jack.","My Jack.","Jack am."], answer:"I'm Jack." },
+{ question:"How do you ask someone's age?", choices:["What's your name?","How old are you?","What is this?","Who is he?"], answer:"How old are you?" },
+{ question:"What does 'How old are you?' mean?", choices:["ເຈົ້າຊື່ຫຍັງ?","ເຈົ້າອາຍຸເທົ່າໃດ?","ເຈົ້າມັກສີຫຍັງ?","ເຈົ້າຢູ່ໃສ?"], answer:"ເຈົ້າອາຍຸເທົ່າໃດ?" },
+{ question:"What is the correct answer to 'How old are you?'", choices:["My name is Anna.","I'm 10 years old.","I like apples.","I'm at school."], answer:"I'm 10 years old." },
+{ question:"Complete: What's your ____?", choices:["name","old","color","book"], answer:"name" },
+{ question:"Complete: My ____ is Jack.", choices:["age","name","color","friend"], answer:"name" },
+{ question:"Complete: How ____ are you?", choices:["name","old","many","blue"], answer:"old" },
+{ question:"Complete: I'm 10 years ____.", choices:["name","old","soon","blue"], answer:"old" },
+{ question:"What is 1 in English?", choices:["one","two","three","four"], answer:"one" },
+{ question:"What is 2 in English?", choices:["one","two","three","four"], answer:"two" },
+{ question:"What is 3 in English?", choices:["two","three","four","five"], answer:"three" },
+{ question:"What is 4 in English?", choices:["three","four","five","six"], answer:"four" },
+{ question:"What is 5 in English?", choices:["four","five","six","seven"], answer:"five" },
+{ question:"What is 6 in English?", choices:["five","six","seven","eight"], answer:"six" },
+{ question:"What is 7 in English?", choices:["six","seven","eight","nine"], answer:"seven" },
+{ question:"What is 8 in English?", choices:["seven","eight","nine","ten"], answer:"eight" },
+{ question:"What is 9 in English?", choices:["eight","nine","ten","eleven"], answer:"nine" },
+{ question:"What is 10 in English?", choices:["nine","ten","eleven","twelve"], answer:"ten" },
+{ question:"What is 11 in English?", choices:["ten","eleven","twelve","thirteen"], answer:"eleven" },
+{ question:"What is 12 in English?", choices:["eleven","twelve","thirteen","fourteen"], answer:"twelve" },
+{ question:"What is 13 in English?", choices:["twelve","thirteen","fourteen","fifteen"], answer:"thirteen" },
+{ question:"What is 14 in English?", choices:["thirteen","fourteen","fifteen","sixteen"], answer:"fourteen" },
+{ question:"What is 15 in English?", choices:["fourteen","fifteen","sixteen","seventeen"], answer:"fifteen" },
+{ question:"What is 16 in English?", choices:["fifteen","sixteen","seventeen","eighteen"], answer:"sixteen" },
+{ question:"What is 17 in English?", choices:["sixteen","seventeen","eighteen","nineteen"], answer:"seventeen" },
+{ question:"What is 18 in English?", choices:["seventeen","eighteen","nineteen","twenty"], answer:"eighteen" },
+{ question:"What is 19 in English?", choices:["eighteen","nineteen","twenty","ten"], answer:"nineteen" },
+{ question:"What is 20 in English?", choices:["nineteen","twenty","twelve","thirteen"], answer:"twenty" },
+{ question:"What color is 'red'?", choices:["ສີແດງ","ສີຟ້າ","ສີຂຽວ","ສີຂາວ"], answer:"ສີແດງ" },
+{ question:"What color is 'blue'?", choices:["ສີແດງ","ສີຟ້າ","ສີຂຽວ","ສີດໍາ"], answer:"ສີຟ້າ" },
+{ question:"What color is 'green'?", choices:["ສີຂຽວ","ສີເຫຼືອງ","ສີບົວ","ສີມ່ວງ"], answer:"ສີຂຽວ" },
+{ question:"What color is 'yellow'?", choices:["ສີເຫຼືອງ","ສີສົ້ມ","ສີແດງ","ສີຂາວ"], answer:"ສີເຫຼືອງ" },
+{ question:"What color is 'orange'?", choices:["ສີສົ້ມ","ສີບົວ","ສີຟ້າ","ສີດໍາ"], answer:"ສີສົ້ມ" },
+{ question:"What color is 'pink'?", choices:["ສີບົວ","ສີມ່ວງ","ສີຂຽວ","ສີເຫຼືອງ"], answer:"ສີບົວ" },
+{ question:"What color is 'purple'?", choices:["ສີມ່ວງ","ສີສົ້ມ","ສີຂາວ","ສີແດງ"], answer:"ສີມ່ວງ" },
+{ question:"What color is 'black'?", choices:["ສີດໍາ","ສີຂາວ","ສີຟ້າ","ສີບົວ"], answer:"ສີດໍາ" },
+{ question:"What color is 'white'?", choices:["ສີຂາວ","ສີດໍາ","ສີຂຽວ","ສີມ່ວງ"], answer:"ສີຂາວ" },
+{ question:"How do you ask someone's favorite color?", choices:["What do you like?","What's your favorite color?","How old are you?","What's your name?"], answer:"What's your favorite color?" },
+{ question:"Complete: My favorite color is ____.", choices:["blue","school","book","happy"], answer:"blue" },
+{ question:"What does 'What do you like?' mean?", choices:["ເຈົ້າມັກຫຍັງ?","ເຈົ້າຊື່ຫຍັງ?","ເຈົ້າຢູ່ໃສ?","ເຈົ້າອາຍຸເທົ່າໃດ?"], answer:"ເຈົ້າມັກຫຍັງ?" },
+{ question:"What is the correct answer to 'What do you like?'", choices:["I am ten.","I like football.","My name is Jack.","I am happy."], answer:"I like football." },
+{ question:"Which sentence is correct?", choices:["I like cats.","I cats like.","Like I cats.","Cats I like."], answer:"I like cats." },
+{ question:"Which sentence is correct?", choices:["I like music.","I music like.","Music like I.","Like music I."], answer:"I like music." },
+{ question:"Which sentence is correct?", choices:["I like apples.","I apples like.","Apples I like.","Like I apples."], answer:"I like apples." },
+{ question:"Which sentence is correct?", choices:["I like books.","I books like.","Books like I.","Like books I."], answer:"I like books." },
+{ question:"Which sentence is correct?", choices:["I like football.","I football like.","Football like I.","Like football I."], answer:"I like football." },
+{ question:"What is 21 in English?", choices:["twenty-one","twenty-two","thirty-one","twenty"], answer:"twenty-one" },
+{ question:"What is 22 in English?", choices:["twenty-one","twenty-two","twenty-three","thirty-two"], answer:"twenty-two" },
+{ question:"What is 23 in English?", choices:["twenty-three","twenty-two","thirty-three","twenty"], answer:"twenty-three" },
+{ question:"What is 30 in English?", choices:["thirty","thirteen","twenty","forty"], answer:"thirty" },
+{ question:"What is 40 in English?", choices:["fourteen","forty","thirty","fifty"], answer:"forty" },
+{ question:"What is 50 in English?", choices:["fifteen","forty","fifty","sixty"], answer:"fifty" },
+{ question:"What is 60 in English?", choices:["sixteen","sixty","seventy","fifty"], answer:"sixty" },
+{ question:"What is 70 in English?", choices:["seventeen","sixty","seventy","eighty"], answer:"seventy" },
+{ question:"What is 80 in English?", choices:["eighteen","seventy","eighty","ninety"], answer:"eighty" },
+{ question:"What is 90 in English?", choices:["nineteen","eighty","ninety","one hundred"], answer:"ninety" },
+{ question:"What is 100 in English?", choices:["one hundred","one thousand","ninety","ten hundred"], answer:"one hundred" },
+{ question:"What is 35 in English?", choices:["thirty-five","thirty-four","forty-five","fifty-three"], answer:"thirty-five" },
+{ question:"What is 48 in English?", choices:["forty-eight","forty-seven","eighty-four","forty"], answer:"forty-eight" },
+{ question:"What is 72 in English?", choices:["seventy-two","seventy-three","twenty-seven","seventy"], answer:"seventy-two" },
+{ question:"What is 99 in English?", choices:["ninety-nine","ninety-eight","ninety","one hundred"], answer:"ninety-nine" },
+{ question:"Which sentence introduces yourself?", choices:["My name is Jack.","He is my friend.","This is my father.","Who is she?"], answer:"My name is Jack." },
+{ question:"Complete: I am 10 years ____.", choices:["old","name","blue","soon"], answer:"old" },
+{ question:"Complete: My favorite ____ is blue.", choices:["color","age","name","friend"], answer:"color" },
+{ question:"Complete: I ____ football.", choices:["like","am","is","are"], answer:"like" },
+{ question:"Complete: I am a ____.", choices:["student","blue","football","morning"], answer:"student" },
+{ question:"Which sentence introduces a male friend?", choices:["This is my friend, Tom.","This is my mother.","She is my sister.","I am Tom."], answer:"This is my friend, Tom." },
+{ question:"Which pronoun is used for Tom?", choices:["She","He","They","We"], answer:"He" },
+{ question:"Which pronoun is used for Anna?", choices:["He","She","They","We"], answer:"She" },
+{ question:"Complete: This is my friend, Anna. ____ is 10 years old.", choices:["He","She","They","We"], answer:"She" },
+{ question:"Complete: This is my friend, Tom. ____ is 10 years old.", choices:["She","He","They","I"], answer:"He" },
+{ question:"What does 'These are my friends.' refer to?", choices:["one friend","many friends","one teacher","one student"], answer:"many friends" },
+{ question:"How do you ask about someone's birthday?", choices:["When is your birthday?","What is your name?","How old are you?","Where are you?"], answer:"When is your birthday?" },
+{ question:"Complete: My birthday is ____ May.", choices:["in","on","at","under"], answer:"in" },
+{ question:"Which sentence is correct?", choices:["My birthday is in May.","My birthday May is.","In May my birthday is.","My is birthday May."], answer:"My birthday is in May." },
+{ question:"Which sentence is correct?", choices:["My birthday is May 10th.","My birthday May 10th is.","May is my birthday 10th.","My 10th birthday May is."], answer:"My birthday is May 10th." },
+{ question:"Which phrase ends an introduction?", choices:["Nice to meet you!","How old are you?","What is this?","Where are you?"], answer:"Nice to meet you!" },
+{ question:"What does 'book' mean?", choices:["ປື້ມ","ບິກ","ສໍ","ກະເປົາ"], answer:"ປື້ມ" },
+{ question:"What does 'pen' mean?", choices:["ບິກ","ສໍ","ຕັ່ງ","ປະຕູ"], answer:"ບິກ" },
+{ question:"What does 'pencil' mean?", choices:["ສໍ","ບິກ","ປື້ມ","ໂຕະ"], answer:"ສໍ" },
+{ question:"What does 'bag' mean?", choices:["ກະເປົາ","ຕັ່ງ","ປະຕູ","ປື້ມ"], answer:"ກະເປົາ" },
+{ question:"What does 'chair' mean?", choices:["ຕັ່ງ","ໂຕະຮຽນ","ປະຕູ","ກະເປົາ"], answer:"ຕັ່ງ" },
+{ question:"What does 'desk' mean?", choices:["ໂຕະຮຽນ","ໂຕະ","ຕັ່ງ","ປື້ມ"], answer:"ໂຕະຮຽນ" },
+{ question:"What does 'table' mean?", choices:["ໂຕະ","ໂຕະຮຽນ","ປະຕູ","ສໍ"], answer:"ໂຕະ" },
+{ question:"What does 'door' mean?", choices:["ປະຕູ","ຕັ່ງ","ກະເປົາ","ບິກ"], answer:"ປະຕູ" },
+{ question:"What is this? It is a ____.", choices:["book","blue","happy","school"], answer:"book" },
+{ question:"What is this? It is a pencil.", choices:["ມັນແມ່ນສໍ","ມັນແມ່ນບິກ","ມັນແມ່ນປື້ມ","ມັນແມ່ນປະຕູ"], answer:"ມັນແມ່ນສໍ" },
+{ question:"Complete: This ____ a book.", choices:["is","are","am","be"], answer:"is" },
+{ question:"Complete: It ____ a pencil.", choices:["is","are","am","be"], answer:"is" },
+{ question:"Which question asks about an object?", choices:["What is this?","How old are you?","What's your name?","Where are you?"], answer:"What is this?" },
+{ question:"What is the correct answer to 'What is this?'", choices:["It is a book.","I am ten.","I like football.","He is tall."], answer:"It is a book." },
+{ question:"Which sentence is correct?", choices:["This is a book.","This are a book.","This am a book.","This be a book."], answer:"This is a book." },
+{ question:"Which sentence is correct?", choices:["This is a pen.","This are a pen.","This am a pen.","This be a pen."], answer:"This is a pen." },
+{ question:"Which word is used for one thing near?", choices:["This","That","These","Those"], answer:"This" },
+{ question:"Which word is used for one thing far?", choices:["This","That","These","Those"], answer:"That" },
+{ question:"Which word is used for many things near?", choices:["This","That","These","Those"], answer:"These" },
+{ question:"Which word is used for many things far?", choices:["This","That","These","Those"], answer:"Those" },
+{ question:"Complete: ____ is a book. (one, near)", choices:["This","That","These","Those"], answer:"This" },
+{ question:"Complete: ____ is a chair. (one, far)", choices:["This","That","These","Those"], answer:"That" },
+{ question:"Complete: ____ are books. (many, near)", choices:["This","That","These","Those"], answer:"These" },
+{ question:"Complete: ____ are chairs. (many, far)", choices:["This","That","These","Those"], answer:"Those" },
+{ question:"Which pair is correct for one thing?", choices:["This is / That is","These are / Those are","This are / That are","These is / Those is"], answer:"This is / That is" },
+{ question:"Which pair is correct for many things?", choices:["This is / That is","These are / Those are","This are / That is","These is / Those are"], answer:"These are / Those are" },
+{ question:"Complete: What ____ this?", choices:["is","are","am","be"], answer:"is" },
+{ question:"Complete: What ____ these?", choices:["are","is","am","be"], answer:"are" },
+{ question:"What is the correct answer to 'What are these?'", choices:["They are books.","It is a book.","He is a teacher.","I am happy."], answer:"They are books." },
+{ question:"Which sentence is correct?", choices:["These are books.","These is books.","These am books.","These be books."], answer:"These are books." },
+{ question:"Which sentence is correct?", choices:["Those are chairs.","Those is chairs.","Those am chairs.","Those be chairs."], answer:"Those are chairs." },
+{ question:"Which sentence is correct?", choices:["That is a chair.","That are a chair.","That am a chair.","That be a chair."], answer:"That is a chair." },
+{ question:"Which word means 'ຂອງຂ້ອຍ'?", choices:["my","your","his","her"], answer:"my" },
+{ question:"Which word means 'ຂອງເຈົ້າ'?", choices:["my","your","his","her"], answer:"your" },
+{ question:"Which word means 'ຂອງລາວ (ຜູ້ຊາຍ)'?", choices:["my","your","his","her"], answer:"his" },
+{ question:"Which word means 'ຂອງລາວ (ຜູ້ຍິງ)'?", choices:["my","your","his","her"], answer:"her" },
+{ question:"Complete: I have a bag. This is ____ bag.", choices:["my","your","his","her"], answer:"my" },
+{ question:"Complete: You have a book. This is ____ book.", choices:["my","your","his","her"], answer:"your" },
+{ question:"Complete: He has a pencil. This is ____ pencil.", choices:["my","your","his","her"], answer:"his" },
+{ question:"Complete: She has a pen. This is ____ pen.", choices:["my","your","his","her"], answer:"her" },
+{ question:"Complete: I ____ a pencil.", choices:["have","has","is","are"], answer:"have" },
+{ question:"Complete: I ____ a book.", choices:["have","has","am","are"], answer:"have" },
+{ question:"Which question asks if someone has a pencil?", choices:["Do you have a pencil?","What is a pencil?","How old are you?","Who is he?"], answer:"Do you have a pencil?" },
+{ question:"What is the correct answer to 'Do you have a pencil?'", choices:["Yes, I do.","Yes, I am.","Yes, I have.","No, I am."], answer:"Yes, I do." },
+{ question:"What is the negative answer to 'Do you have a pencil?'", choices:["No, I don't.","No, I am.","No, I doesn't.","No, I not."], answer:"No, I don't." },
+{ question:"What does 'I have a pencil.' mean?", choices:["ຂ້ອຍມີສໍ","ຂ້ອຍມີບິກ","ຂ້ອຍມີປື້ມ","ຂ້ອຍມີກະເປົາ"], answer:"ຂ້ອຍມີສໍ" },
+{ question:"What does 'I have a book.' mean?", choices:["ຂ້ອຍມີປື້ມ","ຂ້ອຍມີສໍ","ຂ້ອຍມີບິກ","ຂ້ອຍມີຕັ່ງ"], answer:"ຂ້ອຍມີປື້ມ" },
+{ question:"Which sentence is correct?", choices:["This is my bag.","This is me bag.","This my is bag.","My this is bag."], answer:"This is my bag." },
+{ question:"Which sentence is correct?", choices:["This is your book.","This your is book.","This is you book.","Your is this book."], answer:"This is your book." },
+{ question:"Which sentence is correct?", choices:["This is his pencil.","This is he pencil.","His is this pencil.","This his pencil is."], answer:"This is his pencil." },
+{ question:"Which sentence is correct?", choices:["This is her pen.","This is she pen.","Her is this pen.","This her pen is."], answer:"This is her pen." },
+{ question:"A: What do you have? B: ____", choices:["I have a book.","I am a book.","I like a book.","I has a book."], answer:"I have a book." },
+{ question:"What does 'in' mean?", choices:["ໃນ","ເທິງ","ກ້ອງ","ຂ້າງ"], answer:"ໃນ" },
+{ question:"What does 'on' mean?", choices:["ໃນ","ເທິງ","ກ້ອງ","ຂ້າງ"], answer:"ເທິງ" },
+{ question:"What does 'under' mean?", choices:["ໃນ","ເທິງ","ກ້ອງ","ຂ້າງ"], answer:"ກ້ອງ" },
+{ question:"What does 'next to' mean?", choices:["ໃນ","ເທິງ","ກ້ອງ","ຂ້າງ"], answer:"ຂ້າງ" },
+{ question:"Complete: The book is ____ the desk.", choices:["on","in","under","next"], answer:"on" },
+{ question:"Complete: The pencil is ____ the bag.", choices:["in","on","under","next"], answer:"in" },
+{ question:"Complete: The bag is ____ the desk.", choices:["under","in","on","next"], answer:"under" },
+{ question:"Complete: The chair is ____ to the desk.", choices:["next","in","on","under"], answer:"next" },
+{ question:"Where is the book?", choices:["It is on the desk.","It is in the bag.","It is under the desk.","It is next to the desk."], answer:"It is on the desk." },
+{ question:"Where is the pencil?", choices:["It is in the bag.","It is on the desk.","It is under the desk.","It is next to the desk."], answer:"It is in the bag." },
+{ question:"What does 'There is a book.' describe?", choices:["one book","three books","many chairs","two desks"], answer:"one book" },
+{ question:"What does 'There are three chairs.' describe?", choices:["one chair","three chairs","one book","one desk"], answer:"three chairs" },
+{ question:"Which form is used with one thing?", choices:["There is","There are","They are","These are"], answer:"There is" },
+{ question:"Which form is used with many things?", choices:["There is","There are","It is","This is"], answer:"There are" },
+{ question:"Complete: There ____ a book.", choices:["is","are","am","be"], answer:"is" },
+{ question:"Complete: There ____ three books.", choices:["are","is","am","be"], answer:"are" },
+{ question:"Which pronoun means ຂ້ອຍ?", choices:["I","You","He","She"], answer:"I" },
+{ question:"Which pronoun means ເຈົ້າ?", choices:["I","You","He","They"], answer:"You" },
+{ question:"Which pronoun is used for a male?", choices:["He","She","I","We"], answer:"He" },
+{ question:"Which pronoun is used for a female?", choices:["He","She","You","They"], answer:"She" },
+{ question:"Which pronoun means ພວກເຮົາ?", choices:["We","They","You","He"], answer:"We" },
+{ question:"Which pronoun means ພວກເຂົາ?", choices:["They","We","He","I"], answer:"They" },
+{ question:"What does 'friend' mean?", choices:["ໝູ່","ຄູ","ເດັກຊາຍ","ເດັກຍິງ"], answer:"ໝູ່" },
+{ question:"What does 'teacher' mean?", choices:["ຄູ","ໝູ່","ພໍ່","ແມ່"], answer:"ຄູ" },
+{ question:"What does 'boy' mean?", choices:["ເດັກຊາຍ","ເດັກຍິງ","ຄູ","ໝູ່"], answer:"ເດັກຊາຍ" },
+{ question:"What does 'girl' mean?", choices:["ເດັກຍິງ","ເດັກຊາຍ","ຄູ","ໝູ່"], answer:"ເດັກຍິງ" },
+{ question:"What does 'tall' mean?", choices:["ສູງ","ເຕ້ຍ","ໜຸ່ມ","ເຖົ້າ"], answer:"ສູງ" },
+{ question:"What does 'short' mean?", choices:["ເຕ້ຍ","ສູງ","ເຖົ້າ","ໜຸ່ມ"], answer:"ເຕ້ຍ" },
+{ question:"What does 'young' mean?", choices:["ໜຸ່ມ","ເຖົ້າ","ສູງ","ເຕ້ຍ"], answer:"ໜຸ່ມ" },
+{ question:"What does 'old' mean?", choices:["ເຖົ້າ","ໜຸ່ມ","ສູງ","ເຕ້ຍ"], answer:"ເຖົ້າ" },
+{ question:"Complete: I ____ a student.", choices:["am","is","are","be"], answer:"am" },
+{ question:"Complete: You ____ my friend.", choices:["are","is","am","be"], answer:"are" },
+{ question:"Complete: He ____ tall.", choices:["is","are","am","be"], answer:"is" },
+{ question:"Complete: She ____ short.", choices:["is","are","am","be"], answer:"is" },
+{ question:"Complete: They ____ students.", choices:["are","is","am","be"], answer:"are" },
+{ question:"Which sentence is correct for a boy?", choices:["He is tall.","She is tall.","They is tall.","I are tall."], answer:"He is tall." },
+{ question:"Which sentence is correct for a girl?", choices:["She is short.","He is short.","They is short.","I are short."], answer:"She is short." },
+{ question:"What question asks about a male person?", choices:["Who is he?","Who is she?","What is this?","Where are you?"], answer:"Who is he?" },
+{ question:"What question asks about a female person?", choices:["Who is she?","Who is he?","What are these?","How old are you?"], answer:"Who is she?" },
+{ question:"What is the answer to 'Who is he?' in the lesson?", choices:["He is my friend.","She is my teacher.","I am happy.","It is a book."], answer:"He is my friend." },
+{ question:"What is the answer to 'Who is she?' in the lesson?", choices:["She is my teacher.","He is my friend.","It is a book.","I am happy."], answer:"She is my teacher." },
+{ question:"What does 'father' mean?", choices:["ພໍ່","ແມ່","ອ້າຍ","ແມ່ຕູ້"], answer:"ພໍ່" },
+{ question:"What does 'mother' mean?", choices:["ແມ່","ພໍ່","ເອື້ອຍ","ພໍ່ຕູ້"], answer:"ແມ່" },
+{ question:"What does 'brother' mean?", choices:["ອ້າຍ / ນ້ອງຊາຍ","ເອື້ອຍ / ນ້ອງສາວ","ພໍ່","ແມ່"], answer:"ອ້າຍ / ນ້ອງຊາຍ" },
+{ question:"What does 'sister' mean?", choices:["ເອື້ອຍ / ນ້ອງສາວ","ອ້າຍ / ນ້ອງຊາຍ","ແມ່","ພໍ່"], answer:"ເອື້ອຍ / ນ້ອງສາວ" },
+{ question:"What does 'grandfather' mean?", choices:["ພໍ່ຕູ້","ແມ່ຕູ້","ພໍ່","ອ້າຍ"], answer:"ພໍ່ຕູ້" },
+{ question:"What does 'grandmother' mean?", choices:["ແມ່ຕູ້","ພໍ່ຕູ້","ແມ່","ເອື້ອຍ"], answer:"ແມ່ຕູ້" },
+{ question:"Complete: This is my ____.", choices:["father","blue","happy","school"], answer:"father" },
+{ question:"Complete: This is my ____.", choices:["mother","book","green","tall"], answer:"mother" },
+{ question:"Complete: He is my ____.", choices:["brother","sister","mother","girl"], answer:"brother" },
+{ question:"Complete: She is my ____.", choices:["sister","brother","father","boy"], answer:"sister" },
+{ question:"Who is your father's father?", choices:["grandfather","grandmother","mother","sister"], answer:"grandfather" },
+{ question:"Which sentence is correct?", choices:["This is my father.","This are my father.","This is I father.","My this father is."], answer:"This is my father." },
+{ question:"Which sentence is correct?", choices:["This is my mother.","This are my mother.","This is my mothers.","My is mother this."], answer:"This is my mother." },
+{ question:"What does 'happy' mean?", choices:["ມີຄວາມສຸກ","ເສົ້າ","ໃຈຮ້າຍ","ຕື່ນເຕັ້ນ"], answer:"ມີຄວາມສຸກ" },
+{ question:"What does 'sad' mean?", choices:["ເສົ້າ","ມີຄວາມສຸກ","ໃຈຮ້າຍ","ຕື່ນເຕັ້ນ"], answer:"ເສົ້າ" },
+{ question:"What does 'excited' mean?", choices:["ຕື່ນເຕັ້ນ","ເສົ້າ","ໃຈຮ້າຍ","ມີຄວາມສຸກ"], answer:"ຕື່ນເຕັ້ນ" },
+{ question:"What does 'angry' mean?", choices:["ໃຈຮ້າຍ","ມີຄວາມສຸກ","ເສົ້າ","ຕື່ນເຕັ້ນ"], answer:"ໃຈຮ້າຍ" },
+{ question:"How do you ask about someone's feeling?", choices:["How are you?","What's your name?","Where are you?","Who is he?"], answer:"How are you?" },
+{ question:"Complete: How are you? I am ____.", choices:["happy","book","school","blue"], answer:"happy" },
+{ question:"Complete: How are you today? I am ____.", choices:["excited","pencil","school","ten"], answer:"excited" },
+{ question:"Which feeling matches 😊?", choices:["happy","sad","angry","excited"], answer:"happy" },
+{ question:"Which feeling matches 😢?", choices:["sad","happy","angry","excited"], answer:"sad" },
+{ question:"Which feeling matches 😠?", choices:["angry","happy","sad","excited"], answer:"angry" },
+{ question:"Which feeling matches 🤩?", choices:["excited","sad","angry","happy"], answer:"excited" },
+{ question:"Which sentence is correct?", choices:["I am happy.","I is happy.","I are happy.","I be happy."], answer:"I am happy." },
+{ question:"Complete: Who ____ he?", choices:["is","are","am","be"], answer:"is" },
+{ question:"Complete: Who ____ she?", choices:["is","are","am","be"], answer:"is" },
+{ question:"Complete: I ____ football.", choices:["like","likes","am","is"], answer:"like" },
+{ question:"Complete: I ____ like milk.", choices:["don't","doesn't","am not","isn't"], answer:"don't" },
+{ question:"Complete: Do you ____ apples?", choices:["like","likes","liking","liked"], answer:"like" },
+{ question:"What is the correct answer to 'Do you like apples?'", choices:["Yes, I do.","Yes, I am.","No, I am.","Yes, I like."], answer:"Yes, I do." },
+{ question:"What is the correct answer to 'Do you like football?' in the lesson?", choices:["No, I don't.","Yes, I am.","No, I am.","I am football."], answer:"No, I don't." },
+{ question:"Which sentence says you like football?", choices:["I like football.","I don't like football.","I am football.","Football is me."], answer:"I like football." },
+{ question:"Which sentence says you do not like milk?", choices:["I don't like milk.","I like milk.","I am milk.","Milk is like."], answer:"I don't like milk." },
+{ question:"Who is he? He is my ____.", choices:["brother","sister","mother","girl"], answer:"brother" },
+{ question:"Who is he? He is my ____.", choices:["father","sister","mother","girl"], answer:"father" },
+{ question:"Who is she? She is my ____.", choices:["sister","brother","father","boy"], answer:"sister" },
+{ question:"A: How are you? B: ____", choices:["I am happy.","I am a book.","My name is Jack.","I like football."], answer:"I am happy." },
+{ question:"A: Do you like milk? B: ____", choices:["No, I don't.","No, I am.","Yes, I am.","I milk."], answer:"No, I don't." },
+{ question:"What does 'cat' mean?", choices:["ແມວ","ໝາ","ນົກ","ປາ"], answer:"ແມວ" },
+{ question:"What does 'dog' mean?", choices:["ໝາ","ແມວ","ຊ້າງ","ລີງ"], answer:"ໝາ" },
+{ question:"What does 'bird' mean?", choices:["ນົກ","ປາ","ແມວ","ເສືອ"], answer:"ນົກ" },
+{ question:"What does 'fish' mean?", choices:["ປາ","ນົກ","ໝາ","ສິງ"], answer:"ປາ" },
+{ question:"What does 'elephant' mean?", choices:["ຊ້າງ","ເສືອ","ສິງ","ລີງ"], answer:"ຊ້າງ" },
+{ question:"What does 'lion' mean?", choices:["ສິງ","ເສືອ","ຊ້າງ","ປາ"], answer:"ສິງ" },
+{ question:"What does 'tiger' mean?", choices:["ເສືອ","ສິງ","ຊ້າງ","ລີງ"], answer:"ເສືອ" },
+{ question:"What does 'monkey' mean?", choices:["ລີງ","ແມວ","ໝາ","ນົກ"], answer:"ລີງ" },
+{ question:"What is it? 🐱", choices:["It's a cat.","It's a dog.","It's a fish.","It's a bird."], answer:"It's a cat." },
+{ question:"What is it? 🐶", choices:["It's a dog.","It's a cat.","It's a monkey.","It's a lion."], answer:"It's a dog." },
+{ question:"What is it? 🐘", choices:["It's an elephant.","It's a tiger.","It's a lion.","It's a fish."], answer:"It's an elephant." },
+{ question:"What is it? 🐒", choices:["It's a monkey.","It's a dog.","It's a cat.","It's a bird."], answer:"It's a monkey." },
+{ question:"What is it? 🐦", choices:["It's a bird.","It's a fish.","It's a cat.","It's a dog."], answer:"It's a bird." },
+{ question:"What is it? 🐟", choices:["It's a fish.","It's a bird.","It's a dog.","It's a monkey."], answer:"It's a fish." },
+{ question:"What is it? 🦁", choices:["It's a lion.","It's a tiger.","It's an elephant.","It's a monkey."], answer:"It's a lion." },
+{ question:"What is it? 🐯", choices:["It's a tiger.","It's a lion.","It's a dog.","It's a cat."], answer:"It's a tiger." },
+{ question:"Complete: It's ____ cat.", choices:["a","an","are","is"], answer:"a" },
+{ question:"Complete: It's ____ dog.", choices:["a","an","are","is"], answer:"a" },
+{ question:"Complete: It's ____ elephant.", choices:["an","a","are","is"], answer:"an" },
+{ question:"Complete: It's ____ monkey.", choices:["a","an","are","is"], answer:"a" },
+{ question:"Which pattern is taught for animals?", choices:["What is it? → It's a/an …","Where are you? → I'm happy.","Who is he? → It is a book.","How old are you? → I'm blue."], answer:"What is it? → It's a/an …" },
+{ question:"What does 'school' mean?", choices:["ໂຮງຮຽນ","ເຮືອນ","ຕະຫຼາດ","ຮ້ານ"], answer:"ໂຮງຮຽນ" },
+{ question:"What does 'home' mean?", choices:["ເຮືອນ","ໂຮງຮຽນ","ສວນ","ຮ້ານ"], answer:"ເຮືອນ" },
+{ question:"What does 'market' mean?", choices:["ຕະຫຼາດ","ສວນສາທາລະນະ","ໂຮງໝໍ","ສວນສັດ"], answer:"ຕະຫຼາດ" },
+{ question:"What does 'park' mean?", choices:["ສວນສາທາລະນະ","ຕະຫຼາດ","ໂຮງຮຽນ","ຮ້ານ"], answer:"ສວນສາທາລະນະ" },
+{ question:"What does 'hospital' mean?", choices:["ໂຮງໝໍ","ໂຮງຮຽນ","ຮ້ານ","ສວນສັດ"], answer:"ໂຮງໝໍ" },
+{ question:"What does 'shop' mean?", choices:["ຮ້ານ","ໂຮງໝໍ","ຕະຫຼາດ","ເຮືອນ"], answer:"ຮ້ານ" },
+{ question:"What does 'zoo' mean?", choices:["ສວນສັດ","ສວນສາທາລະນະ","ໂຮງຮຽນ","ຕະຫຼາດ"], answer:"ສວນສັດ" },
+{ question:"How do you ask someone's location?", choices:["Where are you?","Who are you?","What is this?","How old are you?"], answer:"Where are you?" },
+{ question:"What is the correct answer to 'Where are you?'", choices:["I'm at school.","I'm happy.","I'm a student.","My name is Jack."], answer:"I'm at school." },
+{ question:"Complete: I'm at ____.", choices:["school","happy","blue","ten"], answer:"school" },
+{ question:"Complete: I'm at ____.", choices:["home","happy","blue","ten"], answer:"home" },
+{ question:"Where are you? I'm at the ____.", choices:["park","book","pencil","teacher"], answer:"park" },
+{ question:"Where are you? I'm at the ____.", choices:["zoo","book","chair","blue"], answer:"zoo" },
+{ question:"Where are you? I'm at the ____.", choices:["market","pencil","happy","old"], answer:"market" },
+{ question:"Which answer is NOT an answer to 'Where are you?'", choices:["I'm happy.","I'm at school.","I'm at home.","I'm at the park."], answer:"I'm happy." },
+{ question:"Which greeting is used in the morning?", choices:["Good morning!","Good evening!","Goodbye!","See you soon!"], answer:"Good morning!" },
+{ question:"Which question asks for a name?", choices:["What's your name?","How old are you?","Where are you?","What do you like?"], answer:"What's your name?" },
+{ question:"Which question asks for age?", choices:["How old are you?","What's your name?","Who is he?","Where are you?"], answer:"How old are you?" },
+{ question:"Which question asks for a favorite color?", choices:["What's your favorite color?","What is this?","Who is she?","How are you?"], answer:"What's your favorite color?" },
+{ question:"Which question asks what someone likes?", choices:["What do you like?","What's your name?","Where are you?","Who is he?"], answer:"What do you like?" },
+{ question:"Which question asks where someone is?", choices:["Where are you?","How old are you?","What's your name?","What is this?"], answer:"Where are you?" },
+{ question:"Which question asks about an object?", choices:["What is this?","Who is he?","How are you?","Where are you?"], answer:"What is this?" },
+{ question:"Which question asks about a person?", choices:["Who is he?","What is this?","What are these?","Where is the book?"], answer:"Who is he?" },
+{ question:"Which question asks about feelings?", choices:["How are you?","What's your name?","What is this?","Where are you?"], answer:"How are you?" },
+{ question:"Which question asks about an animal?", choices:["What is it?","Who is he?","How old are you?","Where are you?"], answer:"What is it?" },
+{ question:"Which sentence introduces yourself?", choices:["My name is Jack.","He is my brother.","This is my father.","It is a book."], answer:"My name is Jack." },
+{ question:"Which sentence introduces a female friend?", choices:["This is my friend, Anna. She is 10 years old.","This is my friend, Tom. He is 10 years old.","He is my brother.","I am a student."], answer:"This is my friend, Anna. She is 10 years old." },
+{ question:"Which sentence introduces a male friend?", choices:["This is my friend, Tom. He is 10 years old.","This is my friend, Anna. She is 10 years old.","She is my sister.","I am happy."], answer:"This is my friend, Tom. He is 10 years old." },
+{ question:"Which word is for one thing near?", choices:["This","That","These","Those"], answer:"This" },
+{ question:"Which word is for many things far?", choices:["Those","These","That","This"], answer:"Those" },
+{ question:"Which word means 'ຂອງຂ້ອຍ'?", choices:["my","his","her","your"], answer:"my" },
+{ question:"Which word means 'ຂອງນາງ'?", choices:["her","his","my","your"], answer:"her" },
+{ question:"Which preposition means 'ໃນ'?", choices:["in","on","under","next to"], answer:"in" },
+{ question:"Which preposition means 'ເທິງ'?", choices:["on","in","under","next to"], answer:"on" },
+{ question:"Which preposition means 'ກ້ອງ'?", choices:["under","on","in","next to"], answer:"under" },
+{ question:"Which preposition means 'ຂ້າງ'?", choices:["next to","under","on","in"], answer:"next to" },
+{ question:"Which form is used with one thing?", choices:["There is","There are","These are","Those are"], answer:"There is" },
+{ question:"Which form is used with many things?", choices:["There are","There is","This is","That is"], answer:"There are" },
+{ question:"Which pronoun is for a male?", choices:["He","She","I","They"], answer:"He" },
+{ question:"Which pronoun is for a female?", choices:["She","He","We","You"], answer:"She" },
+{ question:"Which pronoun means 'ພວກເຮົາ'?", choices:["We","They","He","She"], answer:"We" },
+{ question:"Which pronoun means 'ພວກເຂົາ'?", choices:["They","We","I","You"], answer:"They" },
+{ question:"Which family member is 'father'?", choices:["ພໍ່","ແມ່","ພໍ່ຕູ້","ແມ່ຕູ້"], answer:"ພໍ່" },
+{ question:"Which family member is 'mother'?", choices:["ແມ່","ພໍ່","ເອື້ອຍ","ອ້າຍ"], answer:"ແມ່" },
+{ question:"Which family member is 'brother'?", choices:["ອ້າຍ / ນ້ອງຊາຍ","ເອື້ອຍ / ນ້ອງສາວ","ແມ່","ພໍ່"], answer:"ອ້າຍ / ນ້ອງຊາຍ" },
+{ question:"Which family member is 'sister'?", choices:["ເອື້ອຍ / ນ້ອງສາວ","ອ້າຍ / ນ້ອງຊາຍ","ແມ່","ພໍ່"], answer:"ເອື້ອຍ / ນ້ອງສາວ" },
+{ question:"Which feeling means 'ມີຄວາມສຸກ'?", choices:["happy","sad","angry","excited"], answer:"happy" },
+{ question:"Which feeling means 'ເສົ້າ'?", choices:["sad","happy","angry","excited"], answer:"sad" },
+{ question:"Which feeling means 'ຕື່ນເຕັ້ນ'?", choices:["excited","sad","happy","angry"], answer:"excited" },
+{ question:"Which feeling means 'ໃຈຮ້າຍ'?", choices:["angry","happy","sad","excited"], answer:"angry" },
+{ question:"Which animal is 'ແມວ'?", choices:["cat","dog","bird","fish"], answer:"cat" },
+{ question:"Which animal is 'ໝາ'?", choices:["dog","cat","fish","monkey"], answer:"dog" },
+{ question:"Which animal is 'ນົກ'?", choices:["bird","fish","cat","lion"], answer:"bird" },
+{ question:"Which animal is 'ປາ'?", choices:["fish","bird","dog","tiger"], answer:"fish" },
+{ question:"Which animal is 'ຊ້າງ'?", choices:["elephant","lion","tiger","monkey"], answer:"elephant" },
+{ question:"Which animal is 'ສິງ'?", choices:["lion","tiger","elephant","fish"], answer:"lion" },
+{ question:"Which animal is 'ເສືອ'?", choices:["tiger","lion","monkey","dog"], answer:"tiger" },
+{ question:"Which animal is 'ລີງ'?", choices:["monkey","cat","bird","fish"], answer:"monkey" },
+{ question:"Which place is 'ໂຮງຮຽນ'?", choices:["school","home","market","park"], answer:"school" },
+{ question:"Which place is 'ເຮືອນ'?", choices:["home","school","zoo","shop"], answer:"home" },
+{ question:"Which place is 'ຕະຫຼາດ'?", choices:["market","park","hospital","school"], answer:"market" },
+{ question:"Which place is 'ສວນສາທາລະນະ'?", choices:["park","zoo","home","shop"], answer:"park" },
+{ question:"Which place is 'ໂຮງໝໍ'?", choices:["hospital","school","market","zoo"], answer:"hospital" },
+{ question:"Which place is 'ຮ້ານ'?", choices:["shop","home","park","hospital"], answer:"shop" },
+{ question:"Which place is 'ສວນສັດ'?", choices:["zoo","park","school","market"], answer:"zoo" }
+
+];
+
+/* =========================================================
+   GATE QUESTION STATE
+========================================================= */
+
+let currentGate = null;
+let questionOpen = false;
+
+let gateCooldownUntil = 0;
+let lastAnsweredGateId = null;
+
+let gateCorrectCount = 0;
+
+/* ป้องกัน answerGate ทำงานซ้ำ */
+let answeringGate = false;
+
+// จำนวนข้อของเมืองปัจจุบัน
+let requiredQuestions = 1;
+
+/* =========================================================
+   LOGIN
+========================================================= */
+
+const loginBtn = document.getElementById("loginBtn");
+
+loginBtn.addEventListener("click",login);
+
+async function hashPlayer(name,password){
+
+    const data =
+        new TextEncoder().encode(name+"::"+password);
+
+    const hash =
+        await crypto.subtle.digest("SHA-256",data);
+
+    return [...new Uint8Array(hash)]
+        .map(x=>x.toString(16).padStart(2,"0"))
+        .join("");
+}
+
+
+async function login(){
+
+    const name =
+        document.getElementById("nameInput").value.trim();
+
+    const password =
+        document.getElementById("passwordInput").value;
+
+    const error =
+        document.getElementById("loginError");
+
+    if(!name || !password){
+
+        error.textContent =
+            "กรุณากรอกชื่อและรหัสผ่าน";
+
+        return;
+    }
+
+    loginBtn.disabled = true;
+
+    try{
+
+        playerId =
+            await hashPlayer(name,password);
+
+        const playerRef =
+            ref(db,"players/"+playerId);
+
+        const snapshot =
+            await get(playerRef);
+
+        let old = snapshot.exists()
+            ? snapshot.val()
+            : null;
+
+       localPlayer = {
+
+    name:name,
+
+    level:old?.level ?? 1,
+
+    x:old?.x ?? 0,
+    y:old?.z ?? 0,
+
+    hp:old?.hp ?? 100,
+
+            dead:old?.dead ?? false,
+
+            deathUntil:old?.deathUntil ?? 0,
+
+            online:true,
+
+            lastActivity:Date.now(),
+
+            color:"#168cff",
+
+            unlockedCities:
+                old?.unlockedCities || {}
+
+        };
+
+
+        await set(playerRef,{
+
+    name:localPlayer.name,
+    level:localPlayer.level,
+
+    x:localPlayer.x,
+    z:localPlayer.y,
+    hp:localPlayer.hp,
+    dead:localPlayer.dead,
+    deathUntil:localPlayer.deathUntil,
+    online:true,
+    lastActivity:Date.now(),
+    color:localPlayer.color,
+    unlockedCities:localPlayer.unlockedCities
+
+});
+
+
+        onDisconnect(playerRef)
+            .update({
+                online:false
+            });
+
+
+        document.getElementById("login")
+            .style.display="none";
+
+        document.getElementById("game")
+            .style.display="block";
+
+
+        listenPlayers();
+        listenCityClaims();
+
+        resize();
+
+        showMessage(
+            "เข้าสู่เกมแล้ว เดินไปที่ 🔒 ประตูเมือง"
+        );
+
+    }catch(err){
+
+        console.error(err);
+
+        error.textContent =
+            "ไม่สามารถเชื่อมต่อ Firebase ได้";
+
+    }
+
+    loginBtn.disabled = false;
+}
+
+
+/* =========================================================
+   FIREBASE PLAYERS
+========================================================= */
+
+function listenCityClaims(){
+
+    const claimsRef = ref(db,"cityClaims");
+
+    onValue(claimsRef, snapshot => {
+
+        const oldClaims = {...cityClaims};
+
+        Object.keys(cityClaims).forEach(
+            key => delete cityClaims[key]
+        );
+
+        if(snapshot.exists()){
+            Object.assign(
+                cityClaims,
+                snapshot.val() || {}
+            );
+        }
+
+        // ตรวจสอบว่าเมืองไหนเปลี่ยนเจ้าของ
+        for(const city of cities){
+
+            const oldClaim = oldClaims[city.id];
+            const newClaim = cityClaims[city.id];
+
+            if(
+                oldClaim &&
+                newClaim &&
+                oldClaim.playerId &&
+                newClaim.playerId &&
+                oldClaim.playerId !== newClaim.playerId
+            ){
+
+                // ถ้าผู้เล่นปัจจุบันคือเจ้าของเก่า
+                if(oldClaim.playerId === playerId){
+
+                    // เด้งออกนอกเมืองทันที
+                    localPlayer.x = city.x + city.width / 2;
+                    localPlayer.y = city.y + city.height + 120;
+
+                    // ล็อกเมืองนี้สำหรับผู้เล่นเดิม
+                    localPlayer.unlockedCities =
+                        localPlayer.unlockedCities || {};
+
+                    localPlayer.unlockedCities[city.id] = false;
+
+                    savePlayer();
+
+                    showMessage(
+                        "⚔️ " +
+                        city.name +
+                        " ถูกยึดแล้ว! คุณถูกส่งออกนอกเมือง"
+                    );
+                }
+            }
+        }
+
+    });
+}
+
+
+function listenPlayers(){
+
+    const playersRef =
+        ref(db,"players");
+
+    onValue(playersRef,snapshot=>{
+
+        const data =
+            snapshot.val() || {};
+
+        for(const id in remotePlayers){
+
+            delete remotePlayers[id];
+
+        }
+
+        for(const id in data){
+
+            if(id === playerId)
+                continue;
+
+            const p = data[id];
+
+            if(p.online && !p.dead){
+
+                remotePlayers[id] = {
+
+                    name:p.name || "Player",
+
+                    x:Number(p.x)||0,
+
+                    y:Number(p.z)||0,
+
+                    color:p.color || "#ff4055"
+
+                };
+
+            }
+
+        }
+
+    });
+
+}
+
+
+/* =========================================================
+   SAVE PLAYER
+========================================================= */
+
+let saveTimer = 0;
+
+async function savePlayer(){
+
+    if(!localPlayer || !playerId)
+        return;
+
+    const now = Date.now();
+
+    if(now-saveTimer < 250)
+        return;
+
+    saveTimer = now;
+
+    try{
+
+        await update(
+            ref(db,"players/"+playerId),
+            {
+                x:localPlayer.x,
+                z:localPlayer.y,
+                hp:localPlayer.hp,
+                dead:localPlayer.dead,
+                deathUntil:localPlayer.deathUntil,
+                online:true,
+                lastActivity:localPlayer.lastActivity,
+                unlockedCities:localPlayer.unlockedCities
+            }
+        );
+
+    }catch(e){
+
+        console.log(e);
+
+    }
+}
+
+
+/* =========================================================
+   KEYBOARD
+========================================================= */
+
+window.addEventListener("keydown", e => {
+
+    const tag =
+        e.target?.tagName?.toLowerCase();
+
+    // ตอนพิมพ์ในช่อง Login ไม่ต้องควบคุมเกม
+    if(
+        tag === "input" ||
+        tag === "textarea" ||
+        tag === "select"
+    ){
+        return;
+    }
+
+    const key = e.key.toLowerCase();
+
+    if(key === "w" || key === "arrowup"){
+        keys.up = true;
+        e.preventDefault();
+    }
+
+    if(key === "s" || key === "arrowdown"){
+        keys.down = true;
+        e.preventDefault();
+    }
+
+    if(key === "a" || key === "arrowleft"){
+        keys.left = true;
+        e.preventDefault();
+    }
+
+    if(key === "d" || key === "arrowright"){
+        keys.right = true;
+        e.preventDefault();
+    }
+
+});
+
+
+window.addEventListener("keyup", e => {
+
+    const tag =
+        e.target?.tagName?.toLowerCase();
+
+    if(
+        tag === "input" ||
+        tag === "textarea" ||
+        tag === "select"
+    ){
+        return;
+    }
+
+    const key = e.key.toLowerCase();
+
+    if(key === "w" || key === "arrowup"){
+        keys.up = false;
+    }
+
+    if(key === "s" || key === "arrowdown"){
+        keys.down = false;
+    }
+
+    if(key === "a" || key === "arrowleft"){
+        keys.left = false;
+    }
+
+    if(key === "d" || key === "arrowright"){
+        keys.right = false;
+    }
+
+});
+
+
+/* =========================================================
+   MOBILE JOYSTICK
+========================================================= */
+
+(function(){
+
+    const base =
+        document.getElementById("joystickBase");
+
+    const knob =
+        document.getElementById("joystickKnob");
+
+    if(!base || !knob) return;
+
+    let active=false;
+    let pointerId=null;
+
+    function resetJoystick(){
+
+        active=false;
+        pointerId=null;
+
+        keys.up=false;
+        keys.down=false;
+        keys.left=false;
+        keys.right=false;
+
+        knob.style.transform="translate(0px,0px)";
+    }
+
+    function updateJoystick(e){
+
+        const rect=base.getBoundingClientRect();
+
+        const cx=rect.left+rect.width/2;
+        const cy=rect.top+rect.height/2;
+
+        let dx=e.clientX-cx;
+        let dy=e.clientY-cy;
+
+        const maxDistance =
+            rect.width/2-36;
+
+        const distance =
+            Math.hypot(dx,dy);
+
+        if(distance>maxDistance){
+
+            dx =
+                dx/distance*
+                maxDistance;
+
+            dy =
+                dy/distance*
+                maxDistance;
+        }
+
+        knob.style.transform =
+            "translate("+
+            dx+"px,"+
+            dy+"px)";
+
+        const deadZone=10;
+
+        keys.up =
+            dy < -deadZone;
+
+        keys.down =
+            dy > deadZone;
+
+        keys.left =
+            dx < -deadZone;
+
+        keys.right =
+            dx > deadZone;
+
+        if(
+            Math.abs(dx)<=deadZone &&
+            Math.abs(dy)<=deadZone
+        ){
+            keys.up=false;
+            keys.down=false;
+            keys.left=false;
+            keys.right=false;
+        }
+
+        lastActivity=Date.now();
+    }
+
+    base.addEventListener("pointerdown",e=>{
+
+        e.preventDefault();
+
+        active=true;
+        pointerId=e.pointerId;
+
+        try{
+            base.setPointerCapture(pointerId);
+        }catch(_){ }
+
+        updateJoystick(e);
+    });
+
+    base.addEventListener("pointermove",e=>{
+
+        if(!active || e.pointerId!==pointerId)
+            return;
+
+        e.preventDefault();
+
+        updateJoystick(e);
+    });
+
+    base.addEventListener("pointerup",e=>{
+
+        if(e.pointerId===pointerId)
+            resetJoystick();
+    });
+
+    base.addEventListener("pointercancel",e=>{
+
+        if(e.pointerId===pointerId)
+            resetJoystick();
+    });
+
+    base.addEventListener("lostpointercapture",resetJoystick);
+
+})();
+
+
+/* =========================================================
+   MOVEMENT
+========================================================= */
+
+function movePlayer(){
+
+    if(!localPlayer) return;
+    if(localPlayer.dead) return;
+    if(questionOpen) return;
+
+    let dx = 0;
+    let dy = 0;
+
+    if(keys.left)  dx -= 1;
+    if(keys.right) dx += 1;
+    if(keys.up)    dy -= 1;
+    if(keys.down)  dy += 1;
+
+    if(dx === 0 && dy === 0) return;
+
+    const length = Math.hypot(dx,dy);
+
+    dx /= length;
+    dy /= length;
+
+    const step = MOVE_SPEED;
+
+    const nx = localPlayer.x + dx * step;
+    const ny = localPlayer.y + dy * step;
+
+    // ขอบโลก
+    if(nx < -HALF || nx > HALF) return;
+    if(ny < -HALF || ny > HALF) return;
+
+    /*
+       ตรวจ X และ Y แยกกัน
+       เพื่อให้เดินเลียบกำแพงได้
+    */
+
+    const canMoveX =
+        !wouldEnterLockedCity(
+            nx,
+            localPlayer.y
+        );
+
+    const canMoveY =
+        !wouldEnterLockedCity(
+            localPlayer.x,
+            ny
+        );
+
+    if(canMoveX){
+        localPlayer.x = nx;
+    }
+
+    if(canMoveY){
+        localPlayer.y = ny;
+    }
+
+    if(canMoveX || canMoveY){
+
+        localPlayer.lastActivity = Date.now();
+
+        savePlayer();
+    }
+}
+
+
+/* =========================================================
+   LOCKED CITY COLLISION
+========================================================= */
+
+function insideCity(city,x,y){
+
+    return pointInsideCityShape(city,x,y);
+
+}
+
+
+function nearGate(city,x,y){
+
+    const g = city.gate;
+
+    const halfW = g.width / 2 + 20;
+    const halfH = g.height / 2 + 20;
+
+    return (
+        x >= g.x - halfW &&
+        x <= g.x + halfW &&
+        y >= g.y - halfH &&
+        y <= g.y + halfH
+    );
+}
+
+function wouldEnterLockedCity(x, y){
+
+    if(!localPlayer) return false;
+
+    for(const city of cities){
+
+        // เมืองของเรา เดินผ่านได้ทันที
+        if(isMyCity(city.id)){
+            continue;
+        }
+
+        // ไม่ได้อยู่ในพื้นที่เมือง
+        if(!pointInsideCityShape(city, x, y)){
+            continue;
+        }
+
+        // บริเวณประตู ให้ผ่านไปตรวจคำถามที่ checkGate()
+        if(nearGate(city, x, y)){
+            continue;
+        }
+
+        // เมืองของคนอื่น ห้ามเข้า
+        return true;
+    }
+
+    return false;
+}
+
+
+/* =========================================================
+   GATE DETECTION
+========================================================= */
+
+function checkGate(){
+
+    // ถ้ามีคำถามเปิดอยู่ ไม่ต้องตรวจประตู
+    if(questionOpen){
+        return;
+    }
+
+    if(!localPlayer){
+        return;
+    }
+
+    if(!Array.isArray(cities)){
+        return;
+    }
+
+for(const city of cities){
+
+// เมืองของเรา เดินผ่านได้
+if(
+    localPlayer &&
+    localPlayer.unlockedCities &&
+    localPlayer.unlockedCities[city.id] === true
+){
+    continue;
+}
+
+        // =========================================
+        // ตรวจระยะประตู
+        // =========================================
+        const gateX = city.x;
+
+        const gateY =
+            city.y +
+            city.height / 2;
+
+        const dx =
+            localPlayer.x - gateX;
+
+        const dy =
+            localPlayer.y - gateY;
+
+        const distance =
+            Math.sqrt(
+                dx * dx +
+                dy * dy
+            );
+
+        const gateDistance = 90;
+
+        if(distance > gateDistance){
+            continue;
+        }
+
+        // =========================================
+        // ป้องกันเปิดประตูซ้ำ
+        // =========================================
+        if(
+            currentGate &&
+            currentGate.id === city.id
+        ){
+            return;
+        }
+
+        if(
+            lastAnsweredGateId === city.id &&
+            Date.now() < gateCooldownUntil
+        ){
+            return;
+        }
+
+        // =========================================
+        // เปิดคำถามเฉพาะเมืองที่ยังไม่ได้ยึด
+        // =========================================
+        openGateQuestion(city);
+
+        return;
+    }
+}
+function normalizeQuestion(item){
+
+    if(!item){
+        return null;
+    }
+
+    // =========================
+    // รูปแบบใหม่
+    // =========================
+    if(
+        item.question &&
+        Array.isArray(item.choices)
+    ){
+
+        const correctIndex =
+            item.choices.findIndex(
+                choice => choice === item.answer
+            );
+
+        if(correctIndex < 0){
+            console.error(
+                "ไม่พบคำตอบที่ถูกต้อง:",
+                item
+            );
+            return null;
+        }
+
+        return {
+            q: item.question,
+            a: item.choices,
+            correct: correctIndex
+        };
+    }
+
+
+    // =========================
+    // รูปแบบเดิม
+    // =========================
+    if(
+        item.q &&
+        Array.isArray(item.a)
+    ){
+
+        return {
+            q: item.q,
+            a: item.a,
+            correct: Number(item.correct)
+        };
+    }
+
+
+    console.error(
+        "รูปแบบคำถามไม่ถูกต้อง:",
+        item
+    );
+
+    return null;
+}
+function shuffleQuestionChoices(q){
+
+    const choices = q.a.map((text,index)=>({
+
+        text:text,
+
+        correct:
+            index === q.correct
+
+    }));
+
+
+    for(
+        let i = choices.length - 1;
+        i > 0;
+        i--
+    ){
+
+        const j =
+            Math.floor(
+                Math.random() * (i + 1)
+            );
+
+        [
+            choices[i],
+            choices[j]
+        ] =
+        [
+            choices[j],
+            choices[i]
+        ];
+    }
+
+
+    return choices;
+}
+/* =========================================================
+   OPEN QUESTION
+========================================================= */
+
+function openGateQuestion(city){
+
+    if(questionOpen)
+        return;
+
+currentGate=city;
+questionOpen=true;
+
+// จำนวนข้อขึ้นอยู่กับจำนวนครั้งที่เมืองถูกพิชิต
+const claim = cityClaims[city.id];
+
+const previousCaptureCount =
+    Number(claim?.captureCount) || 0;
+
+// คนแรก = 1 ข้อ
+// คนที่สอง = 2 ข้อ
+// คนที่สาม = 3 ข้อ
+requiredQuestions = previousCaptureCount + 1;
+
+// เริ่มนับใหม่เมื่อเข้าประตูเมือง
+gateCorrectCount = 0;
+
+    /*
+       ใช้คำถามตามหมายเลขเมือง
+       ทำให้แต่ละเมืองมีคำถามต่างกัน
+    */
+
+    // สุ่มโจทย์ใหม่ทุกครั้งที่เปิดประตูเมือง
+const q = normalizeQuestion(
+    questions[
+        Math.floor(
+            Math.random() * questions.length
+        )
+    ]
+);
+
+if(!q){
+
+    questionOpen = false;
+    currentGate = null;
+    answeringGate = false;
+
+    console.error(
+        "ไม่สามารถสร้างคำถามได้"
+    );
+
+    return;
+}
+const shuffledChoices =
+    shuffleQuestionChoices(q);
+
+    const questionEl = document.getElementById("questionText");
+    questionEl.innerHTML = q.q;
+    if (window.MathJax?.typesetPromise) {
+        window.MathJax.typesetPromise([questionEl]).catch(console.error);
+    }
+
+
+    const buttons =
+        document.querySelectorAll(".answer");
+
+
+buttons.forEach((button,index)=>{
+
+button.innerHTML =
+    shuffledChoices[index].text;
+
+    if(window.MathJax?.typesetPromise){
+
+        window.MathJax
+            .typesetPromise([button])
+            .catch(console.error);
+
+    }
+
+    button.className="answer";
+    button.disabled=false;
+
+    button.onclick=()=>{
+
+        answerGate(
+            index,
+            shuffledChoices[index].correct
+        );
+
+    };
+
+});
+
+
+    document.getElementById("questionOverlay")
+        .style.display="flex";
+
+}
+
+
+/* =========================================================
+   ANSWER
+========================================================= */
+
+async function answerGate(index, correct){
+
+    /*
+       ป้องกันการกดคำตอบซ้ำ
+    */
+    if(answeringGate){
+        return;
+    }
+
+    answeringGate = true;
+
+    const buttons =
+        document.querySelectorAll(".answer");
+
+    buttons.forEach(button=>{
+        button.disabled = true;
+    });
+
+    const city = currentGate;
+
+    /*
+       ถ้าไม่มีเมือง
+    */
+    if(!city){
+
+        questionOpen = false;
+        currentGate = null;
+        gateCorrectCount = 0;
+
+        const overlay =
+            document.getElementById("questionOverlay");
+
+        if(overlay){
+            overlay.style.display = "none";
+        }
+
+        answeringGate = false;
+
+        return;
+    }
+
+
+    /* =====================================================
+       ตอบถูก
+    ===================================================== */
+
+    if(correct === true){
+
+        if(buttons[index]){
+            buttons[index].classList.add("correct");
+        }
+
+        gateCorrectCount++;
+
+
+        /* =================================================
+           ยังตอบไม่ครบ
+        ================================================= */
+
+        if(gateCorrectCount < requiredQuestions){
+
+            const hint =
+                document.getElementById("gateHint");
+
+            if(hint){
+
+                hint.textContent =
+                    "✅ ถูกต้อง! " +
+                    gateCorrectCount +
+                    " / " +
+                    requiredQuestions +
+                    " ຂໍ້";
+
+            }
+
+            showMessage(
+                "✅ ตอบถูก! เหลืออีก " +
+                (requiredQuestions - gateCorrectCount) +
+                " ข้อ"
+            );
+
+
+            /*
+               สร้างข้อถัดไป
+            */
+            setTimeout(()=>{
+
+                /*
+                   ถ้าหน้าคำถามถูกปิดไปแล้ว
+                   ไม่ต้องทำอะไร
+                */
+                if(!questionOpen || !currentGate){
+
+                    answeringGate = false;
+
+                    return;
+                }
+
+
+                /*
+                   สุ่มข้อใหม่
+                */
+const q = normalizeQuestion(
+    questions[
+        Math.floor(
+            Math.random() *
+            questions.length
+        )
+    ]
+);
+
+if(!q){
+
+    console.error(
+        "ไม่สามารถสร้างคำถามข้อถัดไปได้"
+    );
+
+    answeringGate = false;
+
+    return;
+}
+
+const shuffledChoices =
+    shuffleQuestionChoices(q);
+                /*
+                   แสดงคำถามใหม่
+                */
+                const questionEl =
+                    document.getElementById(
+                        "questionText"
+                    );
+
+                if(questionEl){
+
+                    questionEl.innerHTML = q.q;
+
+                    if(window.MathJax?.typesetPromise){
+
+                        window.MathJax
+                            .typesetPromise([questionEl])
+                            .catch(err=>{
+                                console.warn(
+                                    "MathJax:",
+                                    err
+                                );
+                            });
+
+                    }
+
+                }
+
+
+                /*
+                   เปลี่ยนตัวเลือกใหม่
+                */
+                buttons.forEach((button,i)=>{
+
+                    button.className = "answer";
+
+                    button.disabled = false;
+
+button.innerHTML =
+    shuffledChoices[i].text;
+
+
+                    if(window.MathJax?.typesetPromise){
+
+                        window.MathJax
+                            .typesetPromise([button])
+                            .catch(err=>{
+                                console.warn(
+                                    "MathJax:",
+                                    err
+                                );
+                            });
+
+                    }
+
+
+                    /*
+                       สำคัญมาก
+                       ให้ปุ่มข้อ 2 ใช้คำตอบของ q ใหม่
+                    */
+                   button.onclick = ()=>{
+
+    answerGate(
+        i,
+        shuffledChoices[i].correct
+    );
+
+};
+
+});
+                const hint =
+                    document.getElementById("gateHint");
+
+                if(hint){
+
+                    hint.textContent =
+                        "ตอบให้ครบ " +
+                        requiredQuestions +
+                        " ข้อ เพื่อพิชิตเมือง";
+
+                }
+
+
+                /*
+                   สำคัญที่สุด
+                   ปลดล็อกให้ตอบข้อ 2 ได้
+                */
+                answeringGate = false;
+
+
+            },700);
+
+            return;
+        }
+
+
+        /* =================================================
+           ตอบครบ → พิชิตเมือง
+        ================================================= */
+
+        const oldLevel =
+            Number(localPlayer.level) || 1;
+
+        const newLevel =
+            oldLevel + 1;
+
+        localPlayer.unlockedCities =
+            localPlayer.unlockedCities || {};
+
+
+        /*
+           ปิดคำถามทันที
+        */
+        lastAnsweredGateId = city.id;
+
+        gateCooldownUntil =
+            Date.now() + 3000;
+
+        questionOpen = false;
+
+        currentGate = null;
+
+        gateCorrectCount = 0;
+
+
+        /*
+           ปิดหน้าคำถาม
+        */
+        const overlay =
+            document.getElementById(
+                "questionOverlay"
+            );
+
+        if(overlay){
+            overlay.style.display = "none";
+        }
+
+
+        /*
+           ปลดปุ่ม
+        */
+        buttons.forEach(button=>{
+
+            button.disabled = false;
+
+            button.className = "answer";
+
+            button.onclick = null;
+
+        });
+
+
+        /*
+           หยุดการเดิน
+        */
+        keys.up = false;
+        keys.down = false;
+        keys.left = false;
+        keys.right = false;
+
+
+        /*
+           ปลดล็อกเมือง Local ทันที
+        */
+        const newUnlockedCities = {
+
+            ...(localPlayer.unlockedCities || {}),
+
+            [city.id]: true
+
+        };
+
+        localPlayer.unlockedCities =
+            newUnlockedCities;
+
+        localPlayer.level =
+            newLevel;
+// อัปเดต cityClaims ในเครื่องทันที
+// ไม่ต้องรอ Firebase
+cityClaims[city.id] = {
+    name: localPlayer.name,
+    playerId: playerId,
+    captureCount:
+        Number(cityClaims[city.id]?.captureCount || 0) + 1,
+    level: newLevel,
+    claimedAt: Date.now()
+};
+
+        /*
+           ย้ายผู้เล่นออกจากประตู
+        */
+        const exitDistance = 120;
+
+        let exitX = city.x;
+
+        let exitY =
+            city.y +
+            city.height / 2 +
+            exitDistance;
+
+
+        /*
+           จำกัดขอบโลก
+        */
+        exitX = Math.max(
+            -HALF + 80,
+            Math.min(
+                HALF - 80,
+                exitX
+            )
+        );
+
+        exitY = Math.max(
+            -HALF + 80,
+            Math.min(
+                HALF - 80,
+                exitY
+            )
+        );
+
+
+        /*
+           ถ้าด้านล่างติดเมืองอื่น
+        */
+        if(
+            cities.some(otherCity=>{
+
+                if(otherCity.id === city.id){
+                    return false;
+                }
+
+                return pointInsideCityShape(
+                    otherCity,
+                    exitX,
+                    exitY
+                );
+
+            })
+        ){
+
+            exitX =
+                city.x -
+                city.width / 2 -
+                exitDistance;
+
+            exitY = city.y;
+
+        }
+
+
+        /*
+           ตั้งตำแหน่งใหม่
+        */
+        localPlayer.x = exitX;
+        localPlayer.y = exitY;
+
+        localPlayer.lastActivity =
+            Date.now();
+
+
+        /*
+           แสดงผลทันที
+        */
+        showMessage(
+            "🏆 พิชิต " +
+            city.name +
+            " สำเร็จ! Level " +
+            localPlayer.level
+        );
+
+
+        /*
+           บันทึก Firebase เบื้องหลัง
+           ไม่รอ Firebase
+        */
+        (async()=>{
+
+            try{
+
+                const claimRef =
+                    ref(
+                        db,
+                        "cityClaims/" + city.id
+                    );
+
+                const snapshot =
+                    await get(claimRef);
+
+                let previousCaptureCount = 0;
+
+                if(snapshot.exists()){
+
+                    const data =
+                        snapshot.val();
+
+                    previousCaptureCount =
+                        Number(
+                            data?.captureCount
+                        ) || 0;
+
+                }
+
+                const newCaptureCount =
+                    previousCaptureCount + 1;
+
+                const updates = {};
+
+
+                updates[
+                    "cityClaims/" + city.id
+                ] = {
+
+                    name:
+                        localPlayer.name,
+
+                    playerId:
+                        playerId,
+
+                    captureCount:
+                        newCaptureCount,
+
+                    level:
+                        newLevel,
+
+                    claimedAt:
+                        Date.now()
+
+                };
+
+
+                updates[
+                    "players/" +
+                    playerId +
+                    "/unlockedCities"
+                ] =
+                    newUnlockedCities;
+
+
+                updates[
+                    "players/" +
+                    playerId +
+                    "/level"
+                ] =
+                    newLevel;
+
+
+                updates[
+                    "players/" +
+                    playerId +
+                    "/x"
+                ] =
+                    localPlayer.x;
+
+
+                updates[
+                    "players/" +
+                    playerId +
+                    "/z"
+                ] =
+                    localPlayer.y;
+
+
+                updates[
+                    "players/" +
+                    playerId +
+                    "/lastActivity"
+                ] =
+                    localPlayer.lastActivity;
+
+
+                await update(
+                    ref(db),
+                    updates
+                );
+
+
+                console.log(
+                    "CITY CAPTURE SAVED:",
+                    city.name
+                );
+
+
+            }catch(error){
+
+                console.warn(
+                    "CITY SAVE ERROR:",
+                    error
+                );
+
+            }
+
+        })();
+
+
+        /*
+           สำคัญ
+           ปลดล็อก answerGate หลังพิชิตเมือง
+        */
+        setTimeout(()=>{
+            answeringGate = false;
+        },500);
+
+        return;
+    }
+
+
+    /* =====================================================
+       ตอบผิด
+    ===================================================== */
+
+    if(buttons[index]){
+        buttons[index].classList.add("wrong");
+    }
+
+
+    const hint =
+        document.getElementById("gateHint");
+
+    if(hint){
+        hint.textContent =
+            "❌ ตอบผิด!";
+    }
+
+
+    showMessage(
+        "❌ ตอบผิด! คุณถูกส่งออกนอกเมือง"
+    );
+
+
+    /*
+       ปิดคำถาม
+    */
+    lastAnsweredGateId = city.id;
+
+    gateCooldownUntil =
+        Date.now() + 1200;
+
+    questionOpen = false;
+
+    currentGate = null;
+
+    gateCorrectCount = 0;
+
+
+    const overlay =
+        document.getElementById("questionOverlay");
+
+    if(overlay){
+        overlay.style.display = "none";
+    }
+
+
+    /*
+       เมืองยังล็อก
+    */
+    localPlayer.unlockedCities =
+        localPlayer.unlockedCities || {};
+
+    localPlayer.unlockedCities[city.id] = false;
+
+
+    /*
+       หาจุดออก
+    */
+    const outsideDistance = 100;
+
+    const mapLimit =
+        WORLD_SIZE / 2;
+
+    let exitX = city.x;
+
+    let exitY =
+        city.y +
+        city.height / 2 +
+        outsideDistance;
+
+
+    exitX = Math.max(
+        -mapLimit + 80,
+        Math.min(
+            mapLimit - 80,
+            exitX
+        )
+    );
+
+    exitY = Math.max(
+        -mapLimit + 80,
+        Math.min(
+            mapLimit - 80,
+            exitY
+        )
+    );
+
+
+    /*
+       ตรวจเมืองอื่น
+    */
+    let blocked = false;
+
+    for(const otherCity of cities){
+
+        if(otherCity.id === city.id){
+            continue;
+        }
+
+        if(
+            pointInsideCityShape(
+                otherCity,
+                exitX,
+                exitY
+            )
+        ){
+
+            blocked = true;
+            break;
+
+        }
+
+    }
+
+
+    /*
+       ถ้าชน ให้ย้ายออกด้านซ้าย
+    */
+    if(blocked){
+
+        exitX =
+            city.x -
+            city.width / 2 -
+            outsideDistance;
+
+        exitY = city.y;
+
+
+        exitX = Math.max(
+            -mapLimit + 80,
+            Math.min(
+                mapLimit - 80,
+                exitX
+            )
+        );
+
+        exitY = Math.max(
+            -mapLimit + 80,
+            Math.min(
+                mapLimit - 80,
+                exitY
+            )
+        );
+
+    }
+
+
+    /*
+       ย้ายผู้เล่น
+    */
+    localPlayer.x = exitX;
+    localPlayer.y = exitY;
+
+    localPlayer.lastActivity =
+        Date.now();
+
+
+    /*
+       เปิดปุ่มกลับ
+    */
+    buttons.forEach(button=>{
+
+        button.disabled = false;
+
+        button.className = "answer";
+
+        button.onclick = null;
+
+    });
+
+
+    /*
+       หยุดการเดิน
+    */
+    keys.up = false;
+    keys.down = false;
+    keys.left = false;
+    keys.right = false;
+
+
+    /*
+       บันทึก Firebase แบบไม่บล็อกเกม
+    */
+    savePlayer().catch(error=>{
+
+        console.warn(
+            "SAVE PLAYER ERROR:",
+            error
+        );
+
+    });
+
+
+    /*
+       ปลดล็อก answerGate ทันที
+    */
+    answeringGate = false;
+
+
+    showMessage(
+        "❌ ตอบผิด! คุณถูกส่งออกนอก " +
+        city.name
+    );
+
+}
+/* =========================================================
+   CAMERA
+========================================================= */
+
+function updateCamera(){
+
+    if(!localPlayer)
+        return;
+
+    cameraX +=
+        (localPlayer.x - cameraX) * .12;
+
+    cameraY +=
+        (localPlayer.y - cameraY) * .12;
+
+}
+
+
+/* =========================================================
+   WORLD DRAW
+========================================================= */
+
+function drawWorld(){
+
+    const w=innerWidth;
+    const h=innerHeight;
+
+
+    ctx.clearRect(0,0,w,h);
+
+
+    ctx.save();
+
+const halfViewW = w / 2;
+const halfViewH = h / 2;
+
+let viewCameraX = cameraX;
+let viewCameraY = cameraY;
+
+// ล็อกกล้องไม่ให้เห็นนอกแมพ
+if(WORLD_SIZE >= w){
+    viewCameraX = Math.max(
+        -HALF + halfViewW,
+        Math.min(HALF - halfViewW, viewCameraX)
+    );
+}else{
+    viewCameraX = 0;
+}
+
+if(WORLD_SIZE >= h){
+    viewCameraY = Math.max(
+        -HALF + halfViewH,
+        Math.min(HALF - halfViewH, viewCameraY)
+    );
+}else{
+    viewCameraY = 0;
+}
+
+ctx.translate(
+    w/2-viewCameraX,
+    h/2-viewCameraY
+);
+
+
+    /*
+       พื้นโลก
+    */
+
+    ctx.fillStyle="#79a96b";
+
+    ctx.fillRect(
+        -HALF,
+        -HALF,
+        WORLD_SIZE,
+        WORLD_SIZE
+    );
+
+
+    /*
+       GRID
+    */
+
+    ctx.strokeStyle="rgba(255,255,255,.08)";
+    ctx.lineWidth=1;
+
+    for(let x=-HALF;x<=HALF;x+=100){
+
+        ctx.beginPath();
+        ctx.moveTo(x,-HALF);
+        ctx.lineTo(x,HALF);
+        ctx.stroke();
+
+    }
+
+    for(let y=-HALF;y<=HALF;y+=100){
+
+        ctx.beginPath();
+        ctx.moveTo(-HALF,y);
+        ctx.lineTo(HALF,y);
+        ctx.stroke();
+
+    }
+
+
+    drawRoads();
+
+    drawNature();
+
+    cities.forEach(drawCity);
+
+    drawRemotePlayers();
+
+    drawLocalPlayer();
+
+
+    ctx.restore();
+
+}
+
+
+/* =========================================================
+   ROADS
+========================================================= */
+
+function drawRoads(){
+
+    ctx.strokeStyle="#d4b77b";
+    ctx.lineWidth=35;
+    ctx.lineCap="round";
+
+    /*
+       horizontal roads
+    */
+
+    for(let row=0;row<5;row++){
+
+        for(let col=0;col<3;col++){
+
+            const a=cities[row*4+col];
+            const b=cities[row*4+col+1];
+
+            ctx.beginPath();
+
+            ctx.moveTo(a.x+250,a.y);
+            ctx.lineTo(b.x-250,b.y);
+
+            ctx.stroke();
+
+        }
+
+    }
+
+
+    /*
+       vertical roads
+    */
+
+    for(let row=0;row<4;row++){
+
+        for(let col=0;col<4;col++){
+
+            const a=cities[row*4+col];
+            const b=cities[(row+1)*4+col];
+
+            ctx.beginPath();
+
+            ctx.moveTo(a.x,a.y+250);
+            ctx.lineTo(b.x,b.y-250);
+
+            ctx.stroke();
+
+        }
+
+    }
+
+}
+
+
+/* =========================================================
+   NATURE
+========================================================= */
+
+function drawNature(){
+
+    for(let i=0;i<100;i++){
+
+        const x =
+            Math.sin(i*77.13)*1400;
+
+        const y =
+            Math.cos(i*42.37)*1400;
+
+
+        /*
+           ไม่วางธรรมชาติในใจกลางเมือง
+        */
+
+        let inside=false;
+
+        for(const city of cities){
+
+            if(
+                Math.abs(x-city.x)<270 &&
+                Math.abs(y-city.y)<270
+            ){
+
+                inside=true;
+                break;
+
+            }
+
+        }
+
+        if(inside)
+            continue;
+
+
+        drawTree(x,y);
+
+    }
+
+
+    for(let i=0;i<30;i++){
+
+        const x =
+            Math.sin(i*17.3)*1400;
+
+        const y =
+            Math.cos(i*29.7)*1400;
+
+        drawMountain(x,y);
+
+    }
+
+}
+
+
+function drawTree(x,y){
+
+    ctx.fillStyle="#74452b";
+
+    ctx.fillRect(
+        x-6,
+        y,
+        12,
+        30
+    );
+
+    ctx.fillStyle="#246b35";
+
+    ctx.beginPath();
+
+    ctx.arc(
+        x,
+        y-5,
+        25,
+        0,
+        Math.PI*2
+    );
+
+    ctx.fill();
+
+}
+
+
+function drawMountain(x,y){
+
+    ctx.fillStyle="#5d6b5e";
+
+    ctx.beginPath();
+
+    ctx.moveTo(x-45,y+30);
+    ctx.lineTo(x,y-45);
+    ctx.lineTo(x+50,y+30);
+    ctx.closePath();
+
+    ctx.fill();
+
+}
+
+
+/* =========================================================
+   CITY
+========================================================= */
+
+/* =========================================================
+   CITY THEMES / ANIMATED CITIES
+========================================================= */
+
+function cityPath(ctx, shape, x, y, w, h, t=0){
+    const r=Math.min(w,h)/2;
+    ctx.beginPath();
+    if(shape==="circle"){
+        ctx.arc(x,y,r,0,Math.PI*2);
+    }else if(shape==="hex"){
+        for(let i=0;i<6;i++){ const a=Math.PI/6+i*Math.PI/3; const px=x+Math.cos(a)*r, py=y+Math.sin(a)*r; i?ctx.lineTo(px,py):ctx.moveTo(px,py); }
+        ctx.closePath();
+    }else if(shape==="diamond"||shape==="diamond2"){
+        ctx.moveTo(x,y-h/2);ctx.lineTo(x+w/2,y);ctx.lineTo(x,y+h/2);ctx.lineTo(x-w/2,y);ctx.closePath();
+    }else if(shape==="octagon"){
+        const rx=w/2, ry=h/2, c=55;
+        ctx.moveTo(x-rx+c,y-ry);ctx.lineTo(x+rx-c,y-ry);ctx.lineTo(x+rx,y-ry+c);ctx.lineTo(x+rx,y+ry-c);ctx.lineTo(x+rx-c,y+ry);ctx.lineTo(x-rx+c,y+ry);ctx.lineTo(x-rx,y+ry-c);ctx.lineTo(x-rx,y-ry+c);ctx.closePath();
+    }else if(shape==="triangle"){
+        ctx.moveTo(x,y-h/2);ctx.lineTo(x+w/2,y+h/2);ctx.lineTo(x-w/2,y+h/2);ctx.closePath();
+    }else if(shape==="star"){
+        for(let i=0;i<10;i++){const a=-Math.PI/2+i*Math.PI/5, rr=i%2?r:r*.48;const px=x+Math.cos(a)*rr,py=y+Math.sin(a)*rr;i?ctx.lineTo(px,py):ctx.moveTo(px,py);}ctx.closePath();
+    }else if(shape==="cross"){
+        const a=w*.22,b=w*.44;ctx.moveTo(x-a,y-h/2);ctx.lineTo(x+a,y-h/2);ctx.lineTo(x+a,y-b);ctx.lineTo(x+b,y-b);ctx.lineTo(x+b,y+b);ctx.lineTo(x+a,y+b);ctx.lineTo(x+a,y+h/2);ctx.lineTo(x-a,y+h/2);ctx.lineTo(x-a,y+b);ctx.lineTo(x-b,y+b);ctx.lineTo(x-b,y-b);ctx.lineTo(x-a,y-b);ctx.closePath();
+    }else if(shape==="shield"){
+        ctx.moveTo(x-w/2,y-h/2);ctx.lineTo(x+w/2,y-h/2);ctx.lineTo(x+w/2,y+h*.12);ctx.quadraticCurveTo(x,y+h/2,x,y+h/2);ctx.quadraticCurveTo(x-w/2,y+h*.12,x-w/2,y-h/2);ctx.closePath();
+    }else if(shape==="flower"){
+        for(let i=0;i<8;i++){const a=i*Math.PI/4, rr=i%2?r:r*.72;const px=x+Math.cos(a)*rr,py=y+Math.sin(a)*rr;i?ctx.lineTo(px,py):ctx.moveTo(px,py);}ctx.closePath();
+    }else if(shape==="castle"){
+        ctx.rect(x-w/2,y-h/2,w,h);
+    }else if(shape==="pill"){
+        ctx.roundRect(x-w/2,y-h/2,w,h,90);
+    }else if(shape==="arch"){
+        ctx.moveTo(x-w/2,y+h/2);ctx.lineTo(x-w/2,y-h*.1);ctx.arc(x,y-h*.1,w/2,Math.PI,0);ctx.lineTo(x+w/2,y+h/2);ctx.closePath();
+    }else if(shape==="gear"){
+        const n=16;
+        for(let i=0;i<n;i++){const a=-Math.PI/2+i*Math.PI*2/n,rr=i%2?r:r*.82;const px=x+Math.cos(a)*rr,py=y+Math.sin(a)*rr;i?ctx.lineTo(px,py):ctx.moveTo(px,py);}ctx.closePath();
+    }else if(shape==="wave"){
+        ctx.moveTo(x-w/2,y-h/2);
+        for(let i=0;i<=10;i++){const px=x-w/2+i*w/10,py=y-h/2+((i%2)*22);ctx.lineTo(px,py);}
+        ctx.lineTo(x+w/2,y+h/2);ctx.lineTo(x-w/2,y+h/2);ctx.closePath();
+    }else if(shape==="sun"){
+        ctx.arc(x,y,r*.68,0,Math.PI*2);
+    }else if(shape==="moon"){
+        ctx.arc(x,y,r*.8,0,Math.PI*2);
+    }else if(shape==="leaf"){
+        ctx.moveTo(x,y-h/2);ctx.bezierCurveTo(x+w/2,y-h*.18,x+w*.28,y+h/2,x,y+h/2);ctx.bezierCurveTo(x-w*.28,y+h/2,x-w/2,y-h*.18,x,y-h/2);ctx.closePath();
+    }else{
+        ctx.roundRect(x-w/2,y-h/2,w,h,28);
+    }
+}
+function pointInsideCityShape(city, px, py){
+
+    const left   = city.x - city.width / 2;
+    const right  = city.x + city.width / 2;
+    const top    = city.y - city.height / 2;
+    const bottom = city.y + city.height / 2;
+
+    return (
+        px >= left &&
+        px <= right &&
+        py >= top &&
+        py <= bottom
+    );
+}
+function drawCityDecor(city, theme, t){
+    const x=city.x,y=city.y,w=city.width,h=city.height;
+    ctx.save();
+    ctx.globalAlpha=.85;
+    ctx.strokeStyle=theme.accent;
+    ctx.fillStyle=theme.accent;
+    ctx.lineWidth=4;
+
+    const phase=t/900 + city.id;
+    if(theme.anim==="pulse"){
+        const rr=65+Math.sin(phase)*12;
+        ctx.globalAlpha=.18+.12*(Math.sin(phase)+1);
+        ctx.beginPath();ctx.arc(x,y,rr,0,Math.PI*2);ctx.stroke();
+    }
+    if(theme.anim==="orbit"){
+        for(let i=0;i<4;i++){const a=phase+i*Math.PI/2;ctx.beginPath();ctx.arc(x+Math.cos(a)*145,y+Math.sin(a)*145,8,0,Math.PI*2);ctx.fill();}
+    }
+    if(theme.anim==="spin"){
+        ctx.translate(x,y);ctx.rotate(phase*.55);ctx.globalAlpha=.35;
+        for(let i=0;i<6;i++){ctx.rotate(Math.PI/3);ctx.fillRect(95,-4,42,8);}
+        ctx.resetTransform();
+    }
+    if(theme.anim==="float"){
+        for(let i=0;i<7;i++){const px=x-170+i*55, py=y+Math.sin(phase+i)*22;ctx.globalAlpha=.28;ctx.beginPath();ctx.arc(px,py,5+(i%3)*2,0,Math.PI*2);ctx.fill();}
+    }
+    if(theme.anim==="wave"){
+        ctx.globalAlpha=.28;
+        for(let j=0;j<3;j++){ctx.beginPath();for(let i=0;i<=16;i++){const px=x-w*.38+i*w*.05,py=y+120+j*24+Math.sin(phase+i*.8+j)*7; i?ctx.lineTo(px,py):ctx.moveTo(px,py);}ctx.stroke();}
+    }
+    if(theme.anim==="blink"){
+        ctx.globalAlpha=.25+.5*(Math.sin(phase*1.8)+1)/2;
+        for(let i=0;i<6;i++){ctx.beginPath();ctx.arc(x-150+i*60,y-20+(i%2)*55,7,0,Math.PI*2);ctx.fill();}
+    }
+
+    if(theme.deco==="towers"||theme.deco==="spires"){
+        for(let i=-1;i<=1;i++){ctx.fillRect(x+i*100-16,y-125,32,105);ctx.beginPath();ctx.moveTo(x+i*100-25,y-125);ctx.lineTo(x+i*100,y-165);ctx.lineTo(x+i*100+25,y-125);ctx.closePath();ctx.fill();}
+    }else if(theme.deco==="trees"||theme.deco==="forest"){
+        for(let i=0;i<6;i++){const px=x-180+(i%3)*180,py=y-115+Math.floor(i/3)*250;ctx.beginPath();ctx.arc(px,py,24,0,Math.PI*2);ctx.fill();}
+    }else if(theme.deco==="crystals"||theme.deco==="energy"){
+        for(let i=0;i<7;i++){const px=x-170+i*55,py=y+70+Math.sin(phase+i)*15;ctx.beginPath();ctx.moveTo(px,py-38);ctx.lineTo(px+16,py+25);ctx.lineTo(px-13,py+25);ctx.closePath();ctx.fill();}
+    }else if(theme.deco==="flags"||theme.deco==="lamps"){
+        for(let i=-1;i<=1;i++){const px=x+i*120;ctx.fillRect(px-3,y-130,6,130);ctx.beginPath();ctx.moveTo(px,y-130);ctx.lineTo(px+45,y-110);ctx.lineTo(px,y-90);ctx.closePath();ctx.fill();}
+    }else if(theme.deco==="petals"||theme.deco==="leaves"||theme.deco==="moons"){
+        for(let i=0;i<6;i++){const a=phase+i*Math.PI/3,px=x+Math.cos(a)*120,py=y+Math.sin(a)*120;ctx.beginPath();ctx.arc(px,py,14,0,Math.PI*2);ctx.fill();}
+    }else if(theme.deco==="flames"||theme.deco==="rays"){
+        for(let i=0;i<8;i++){const a=i*Math.PI/4;ctx.beginPath();ctx.moveTo(x+Math.cos(a)*95,y+Math.sin(a)*95);ctx.lineTo(x+Math.cos(a)*145,y+Math.sin(a)*145);ctx.stroke();}
+    }else if(theme.deco==="pipes"){
+        for(let i=0;i<5;i++){ctx.beginPath();ctx.moveTo(x-180+i*90,y+110);ctx.lineTo(x-180+i*90,y+30);ctx.quadraticCurveTo(x-135+i*90,y-10,x-90+i*90,y+30);ctx.lineTo(x-90+i*90,y+105);ctx.stroke();}
+    }else if(theme.deco==="stars"){
+        for(let i=0;i<8;i++){const px=x-170+(i%4)*115,py=y-110+Math.floor(i/4)*210;ctx.beginPath();ctx.moveTo(px,py-10);ctx.lineTo(px+5,py);ctx.lineTo(px,py+10);ctx.lineTo(px-5,py);ctx.closePath();ctx.fill();}
+    }else if(theme.deco==="water"){
+        ctx.globalAlpha=.32;ctx.lineWidth=7;
+        for(let j=0;j<3;j++){ctx.beginPath();for(let i=0;i<12;i++){const px=x-200+i*36,py=y-100+j*100+Math.sin(phase+i*.9+j)*9;i?ctx.lineTo(px,py):ctx.moveTo(px,py);}ctx.stroke();}
+    }
+    ctx.restore();
+}
+
+function drawCity(city){
+
+    const claim = cityClaims[city.id];
+
+    const unlocked =
+        !!(
+            claim &&
+            claim.playerId === playerId
+        );
+
+    const theme =
+        CITY_THEMES[
+            city.id % CITY_THEMES.length
+        ];
+
+    const t = performance.now();
+
+    const left =
+        city.x - city.width / 2;
+
+    const top =
+        city.y - city.height / 2;
+
+    const right =
+        city.x + city.width / 2;
+
+    const bottom =
+        city.y + city.height / 2;
+
+    /* =====================================================
+       พื้นที่เมืองด้านใน
+    ===================================================== */
+
+    ctx.save();
+
+    ctx.fillStyle =
+        theme.color + "55";
+
+    ctx.fillRect(
+        left,
+        top,
+        city.width,
+        city.height
+    );
+
+    ctx.restore();
+
+
+    /* =====================================================
+       กำแพงเมือง
+       เป็นสี่เหลี่ยมเหมือนกันทุกเมือง
+    ===================================================== */
+
+    const gate = city.gate;
+
+    const gateLeft =
+        gate.x - gate.width / 2;
+
+    const gateRight =
+        gate.x + gate.width / 2;
+
+
+    ctx.save();
+
+    ctx.shadowColor =
+        "rgba(0,0,0,.35)";
+
+    ctx.shadowBlur = 15;
+
+    ctx.strokeStyle =
+        unlocked
+        ? "#69ff9b"
+        : theme.accent;
+
+    ctx.lineWidth = 18;
+
+    /*
+       วาดกำแพง 4 ด้าน
+       แต่เว้นช่องประตูไว้ด้านล่าง
+    */
+
+    /* ด้านบน */
+    ctx.beginPath();
+
+    ctx.moveTo(left,top);
+    ctx.lineTo(right,top);
+
+    ctx.stroke();
+
+
+    /* ด้านซ้าย */
+    ctx.beginPath();
+
+    ctx.moveTo(left,top);
+    ctx.lineTo(left,bottom);
+
+    ctx.stroke();
+
+
+    /* ด้านขวา */
+    ctx.beginPath();
+
+    ctx.moveTo(right,top);
+    ctx.lineTo(right,bottom);
+
+    ctx.stroke();
+
+
+    /* ด้านล่างซ้ายของประตู */
+    ctx.beginPath();
+
+    ctx.moveTo(left,bottom);
+    ctx.lineTo(gateLeft,bottom);
+
+    ctx.stroke();
+
+
+    /* ด้านล่างขวาของประตู */
+    ctx.beginPath();
+
+    ctx.moveTo(gateRight,bottom);
+    ctx.lineTo(right,bottom);
+
+    ctx.stroke();
+
+    ctx.restore();
+
+
+    /* =====================================================
+       ขอบกำแพงด้านใน
+    ===================================================== */
+
+    ctx.save();
+
+    ctx.strokeStyle =
+        "rgba(255,255,255,.25)";
+
+    ctx.lineWidth = 3;
+
+    ctx.strokeRect(
+        left + 12,
+        top + 12,
+        city.width - 24,
+        city.height - 24
+    );
+
+    ctx.restore();
+
+
+    /* =====================================================
+       อาคาร / Animation ภายในเมือง
+       ยังใช้รูปทรงเดิมได้
+       แต่ไม่ใช้เป็น collision
+    ===================================================== */
+
+    drawCityDecor(
+        city,
+        theme,
+        t
+    );
+
+
+    /* =====================================================
+       อาคาร
+    ===================================================== */
+
+    ctx.save();
+
+    /*
+       อาคารอยู่ในกรอบสี่เหลี่ยม
+       ไม่ตัด collision
+    */
+
+    const bx = [
+        -160,-55,55,160,
+        -160,-55,55,160
+    ];
+
+    const by = [
+        -115,-115,-115,-115,
+        80,80,80,80
+    ];
+
+    for(let i=0;i<8;i++){
+
+        const bob =
+            theme.anim === "float"
+            ? Math.sin(
+                t / 700 +
+                i +
+                city.id
+              ) * 5
+            : 0;
+
+        ctx.fillStyle =
+            i % 2
+            ? theme.accent + "aa"
+            : "#f2f2f2";
+
+        ctx.fillRect(
+            city.x + bx[i] - 25,
+            city.y + by[i] - 25 + bob,
+            50,
+            50
+        );
+
+        ctx.fillStyle =
+            theme.color;
+
+        ctx.fillRect(
+            city.x + bx[i] - 16,
+            city.y + by[i] - 12 + bob,
+            13,
+            12
+        );
+
+        ctx.fillRect(
+            city.x + bx[i] + 3,
+            city.y + by[i] - 12 + bob,
+            13,
+            12
+        );
+    }
+
+    ctx.restore();
+
+
+    /* =====================================================
+       ชื่อเมือง
+    ===================================================== */
+
+    ctx.textAlign = "center";
+
+    ctx.font =
+        "bold 28px Arial";
+
+    ctx.fillStyle =
+        "white";
+
+    ctx.strokeStyle =
+        "rgba(0,0,0,.8)";
+
+    ctx.lineWidth = 6;
+
+    ctx.strokeText(
+        city.name,
+        city.x,
+        city.y - 195
+    );
+
+    ctx.fillText(
+        city.name,
+        city.x,
+        city.y - 195
+    );
+
+
+    /* =====================================================
+       เจ้าของเมือง
+    ===================================================== */
+
+    if(claim && claim.name){
+
+        const captureNumber =
+            Number(claim.captureCount) || 1;
+
+        const claimLabel =
+            "🏆 " +
+            claim.name +
+            "  " +
+            captureNumber;
+
+        const labelY =
+            city.y;
+
+        ctx.textBaseline =
+            "middle";
+
+        ctx.font =
+            "bold 38px Arial,sans-serif";
+
+        const labelWidth =
+            Math.min(
+                ctx.measureText(claimLabel).width + 34,
+                city.width - 24
+            );
+
+        const labelHeight = 62;
+
+        ctx.fillStyle =
+            "rgba(0,0,0,.86)";
+
+        ctx.strokeStyle =
+            theme.accent;
+
+        ctx.lineWidth = 4;
+
+        ctx.beginPath();
+
+        ctx.roundRect(
+            city.x - labelWidth / 2,
+            labelY - labelHeight / 2,
+            labelWidth,
+            labelHeight,
+            14
+        );
+
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.fillStyle =
+            theme.accent;
+
+        ctx.strokeStyle =
+            "rgba(0,0,0,.95)";
+
+        ctx.lineWidth = 3;
+
+        ctx.strokeText(
+            claimLabel,
+            city.x,
+            labelY
+        );
+
+        ctx.fillText(
+            claimLabel,
+            city.x,
+            labelY
+        );
+
+        ctx.textBaseline =
+            "alphabetic";
+    }
+
+
+    /* =====================================================
+       ประตู
+    ===================================================== */
+
+    drawGate(city);
+}
+/* =========================================================
+   GATE
+========================================================= */
+
+function drawGate(city){
+
+    const g = city.gate;
+
+    const claim =
+        cityClaims[city.id];
+
+    const unlocked =
+        !!(
+            claim &&
+            claim.playerId === playerId
+        );
+
+    const left =
+        g.x - g.width / 2;
+
+    const top =
+        city.y + city.height / 2 - 12;
+
+    ctx.save();
+
+    /*
+       ตัวประตู
+    */
+
+    ctx.fillStyle =
+        unlocked
+        ? "#25c76a"
+        : "#26313d";
+
+    ctx.fillRect(
+        left,
+        top,
+        g.width,
+        g.height
+    );
+
+
+    /*
+       ขอบ
+    */
+
+    ctx.strokeStyle =
+        unlocked
+        ? "#9affc0"
+        : "#ffcc33";
+
+    ctx.lineWidth = 5;
+
+    ctx.strokeRect(
+        left,
+        top,
+        g.width,
+        g.height
+    );
+
+
+    /*
+       Icon
+    */
+
+    ctx.textAlign = "center";
+
+    ctx.font =
+        "30px Arial";
+
+    ctx.fillStyle =
+        "#fff";
+
+    ctx.fillText(
+        unlocked ? "🔓" : "🔒",
+        g.x,
+        top + 32
+    );
+
+
+    /*
+       ข้อความ
+    */
+
+    ctx.font =
+        "bold 16px Arial";
+
+    ctx.fillText(
+        unlocked
+        ? "เปิดแล้ว"
+        : "ตอบคำถาม",
+        g.x,
+        top + 56
+    );
+
+    ctx.restore();
+}
+
+
+/* =========================================================
+   LOCAL PLAYER
+========================================================= */
+
+function drawLocalPlayer(){
+
+    if(!localPlayer)
+        return;
+
+    ctx.save();
+
+    ctx.translate(
+        localPlayer.x,
+        localPlayer.y
+    );
+
+
+    /*
+       เงา
+    */
+
+    ctx.fillStyle="rgba(0,0,0,.25)";
+
+    ctx.beginPath();
+
+    ctx.ellipse(
+        0,
+        20,
+        20,
+        9,
+        0,
+        0,
+        Math.PI*2
+    );
+
+    ctx.fill();
+
+
+    /*
+       ตัวผู้เล่น
+    */
+
+    ctx.fillStyle="#168cff";
+
+    ctx.beginPath();
+
+    ctx.arc(
+        0,
+        0,
+        20,
+        0,
+        Math.PI*2
+    );
+
+    ctx.fill();
+
+
+    ctx.strokeStyle="white";
+    ctx.lineWidth=4;
+
+    ctx.stroke();
+
+
+    ctx.fillStyle="white";
+
+    ctx.beginPath();
+
+    ctx.arc(
+        -6,
+        -5,
+        4,
+        0,
+        Math.PI*2
+    );
+
+    ctx.arc(
+        6,
+        -5,
+        4,
+        0,
+        Math.PI*2
+    );
+
+    ctx.fill();
+
+
+    ctx.restore();
+
+}
+
+
+/* =========================================================
+   REMOTE PLAYERS
+========================================================= */
+
+function drawRemotePlayers(){
+
+    for(const id in remotePlayers){
+
+        const p=remotePlayers[id];
+
+        ctx.save();
+
+        ctx.translate(p.x,p.y);
+
+        ctx.fillStyle="rgba(0,0,0,.25)";
+
+        ctx.beginPath();
+
+        ctx.ellipse(
+            0,
+            18,
+            18,
+            8,
+            0,
+            0,
+            Math.PI*2
+        );
+
+        ctx.fill();
+
+
+        ctx.fillStyle=p.color;
+
+        ctx.beginPath();
+
+        ctx.arc(
+            0,
+            0,
+            18,
+            0,
+            Math.PI*2
+        );
+
+        ctx.fill();
+
+
+        ctx.strokeStyle="white";
+        ctx.lineWidth=3;
+
+        ctx.stroke();
+
+
+        ctx.font="bold 14px Arial";
+
+        ctx.textAlign="center";
+
+        ctx.fillStyle="white";
+
+        ctx.fillText(
+            p.name,
+            0,
+            -27
+        );
+
+
+        ctx.restore();
+
+    }
+
+}
+
+
+/* =========================================================
+   CURRENT CITY
+========================================================= */
+
+function updateCityHUD(){
+
+    if(!localPlayer)
+        return;
+
+    let current=null;
+
+    for(const city of cities){
+
+        if(
+            insideCity(
+                city,
+                localPlayer.x,
+                localPlayer.y
+            )
+        ){
+
+            current=city;
+            break;
+
+        }
+
+    }
+
+
+    const hud =
+        document.getElementById("hudCity");
+
+
+if(current){
+
+   const claim =
+       cityClaims?.[current.id];
+
+const unlocked =
+    !!(
+        claim &&
+        claim.playerId === playerId
+    );
+
+const claimedByOther =
+    !!(
+        claim &&
+        claim.playerId !== playerId
+    );
+
+        hud.textContent =
+            "📍 "+current.name+
+            (unlocked ? " 🔓" : " 🔒");
+
+    }else{
+
+        hud.textContent =
+            "📍 นอกเมือง";
+
+    }
+
+
+document.getElementById("hudName")
+    .textContent=
+    "👤 "+localPlayer.name;
+
+document.getElementById("hudLevel")
+    .textContent=
+    "⭐ Level "+(localPlayer.level || 1);
+
+}
+
+function drawCityReward(ctx, x, y, scale = 1){
+
+    ctx.save();
+
+    const size = Math.max(12, 34 * scale);
+
+    // วงกลมพื้นหลัง
+    ctx.beginPath();
+    ctx.arc(
+        x,
+        y,
+        size * 0.62,
+        0,
+        Math.PI * 2
+    );
+
+    ctx.fillStyle = "rgba(255,215,0,0.95)";
+    ctx.fill();
+
+    ctx.lineWidth = Math.max(1, 3 * scale);
+    ctx.strokeStyle = "#fff";
+    ctx.stroke();
+
+    // ถ้วยรางวัล
+    ctx.font =
+        `${size}px "Segoe UI Emoji","Noto Color Emoji",sans-serif`;
+
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+
+    ctx.fillText("🏆", x, y);
+
+    ctx.restore();
+}
+/* =========================================================
+   MINI MAP
+========================================================= */
+
+function drawMiniMap(){
+
+    const size = 420;
+
+    mctx.clearRect(
+        0,
+        0,
+        size,
+        size
+    );
+
+
+    /* =========================================================
+       BACKGROUND
+    ========================================================= */
+
+    mctx.fillStyle = "#527b52";
+
+    mctx.fillRect(
+        0,
+        0,
+        size,
+        size
+    );
+
+
+    /* =========================================================
+       WORLD -> MINIMAP
+    ========================================================= */
+
+    const scale =
+        size / WORLD_SIZE;
+
+
+    /* =========================================================
+       CITIES
+    ========================================================= */
+
+    for(const city of cities){
+
+        const x =
+            (city.x + HALF) * scale;
+
+        const y =
+            (city.y + HALF) * scale;
+
+
+        /*
+           ตรวจว่าเมืองนี้ผู้เล่นพิชิตแล้วหรือยัง
+        */
+
+const unlocked =
+    !!localPlayer?.unlockedCities?.[city.id];
+
+const claim =
+    cityClaims?.[city.id];
+
+const claimedByOther =
+    !!(
+        claim &&
+        claim.playerId &&
+        claim.playerId !== playerId
+    );
+
+const theme =
+    CITY_THEMES[
+        city.id % CITY_THEMES.length
+    ];
+
+
+        /*
+           ขนาดเมืองบน Mini Map
+        */
+
+        const miniW =
+            500 * scale;
+
+        const miniH =
+            500 * scale;
+
+
+        /* =====================================================
+           CITY SHAPE
+        ===================================================== */
+
+        mctx.save();
+
+        mctx.globalAlpha = .82;
+
+
+        mctx.fillStyle =
+    unlocked
+    ? "#6dff9a"
+    : claimedByOther
+        ? "#ff3030"
+        : city.color;
+
+
+        cityPath(
+            mctx,
+            theme.shape,
+            x,
+            y,
+            miniW,
+            miniH,
+            performance.now()
+        );
+
+        mctx.fill();
+
+
+        /* =====================================================
+           CITY BORDER
+        ===================================================== */
+
+        mctx.globalAlpha = 1;
+
+        mctx.strokeStyle =
+    unlocked
+    ? "#ffffff"
+    : claimedByOther
+        ? "#ff0000"
+        : theme.accent;
+
+        mctx.lineWidth = 2;
+
+
+        cityPath(
+            mctx,
+            theme.shape,
+            x,
+            y,
+            miniW,
+            miniH,
+            performance.now()
+        );
+
+        mctx.stroke();
+
+
+        /* =====================================================
+           CENTER POINT
+        ===================================================== */
+
+        mctx.fillStyle =
+    unlocked
+    ? "#ffffff"
+    : claimedByOther
+        ? "#ff0000"
+        : theme.accent;
+
+        mctx.globalAlpha = .9;
+
+
+        mctx.beginPath();
+
+        mctx.arc(
+            x,
+            y,
+            Math.max(
+                2,
+                3 * scale / .1
+            ),
+            0,
+            Math.PI * 2
+        );
+
+        mctx.fill();
+
+        mctx.restore();
+
+
+        /* =====================================================
+           GATE
+        ===================================================== */
+
+        const gx =
+            (city.gate.x + HALF) * scale;
+
+        const gy =
+            (city.gate.y + HALF) * scale;
+
+
+        mctx.fillStyle =
+            unlocked
+            ? "#00ff80"
+            : "#ffcc00";
+
+
+        mctx.fillRect(
+            gx - 5,
+            gy - 4,
+            10,
+            8
+        );
+
+
+        /* =====================================================
+           🏆 REWARD
+           เมืองที่ผู้เล่นพิชิตแล้ว
+        ===================================================== */
+
+        if(claim){
+
+            mctx.save();
+
+
+            /*
+               ตำแหน่งถ้วยรางวัล
+               ให้อยู่เหนือเมือง
+            */
+
+const rewardX = x;
+const rewardY = y;
+
+
+            /*
+               วงกลมพื้นหลัง
+               ทำให้เห็นง่ายบน Mini Map
+            */
+
+            mctx.beginPath();
+
+            mctx.arc(
+    rewardX,
+    rewardY,
+    20,
+    0,
+    Math.PI * 2
+);
+
+
+            mctx.fillStyle =
+                "rgba(0,0,0,.75)";
+
+            mctx.fill();
+
+
+            /*
+               ขอบสีทอง
+            */
+
+            mctx.strokeStyle =
+                "#ffd700";
+
+            mctx.lineWidth = 2;
+
+            mctx.stroke();
+
+
+            /*
+               🏆
+            */
+
+           mctx.font =
+    '32px "Segoe UI Emoji","Noto Color Emoji",sans-serif';
+
+            mctx.textAlign =
+                "center";
+
+            mctx.textBaseline =
+                "middle";
+
+
+            mctx.fillText(
+                "🏆",
+                rewardX,
+                rewardY
+            );
+
+
+            mctx.restore();
+
+        }
+
+    }
+
+
+    /* =========================================================
+       REMOTE PLAYERS
+    ========================================================= */
+
+    for(const id in remotePlayers){
+
+        const p =
+            remotePlayers[id];
+
+
+        const x =
+            (p.x + HALF) * scale;
+
+        const y =
+            (p.y + HALF) * scale;
+
+
+        mctx.fillStyle =
+            "#ff304f";
+
+
+        mctx.beginPath();
+
+        mctx.arc(
+            x,
+            y,
+            6,
+            0,
+            Math.PI * 2
+        );
+
+        mctx.fill();
+
+    }
+
+
+    /* =========================================================
+       LOCAL PLAYER
+    ========================================================= */
+
+    if(localPlayer){
+
+        const x =
+            (localPlayer.x + HALF) * scale;
+
+        const y =
+            (localPlayer.y + HALF) * scale;
+
+
+        mctx.fillStyle =
+            "#168cff";
+
+
+        mctx.beginPath();
+
+        mctx.arc(
+            x,
+            y,
+            8,
+            0,
+            Math.PI * 2
+        );
+
+        mctx.fill();
+
+
+        mctx.strokeStyle =
+            "white";
+
+        mctx.lineWidth = 2;
+
+        mctx.stroke();
+
+    }
+
+
+    /* =========================================================
+       VIEWPORT
+    ========================================================= */
+
+    if(localPlayer){
+
+        const vw =
+            innerWidth /
+            WORLD_SIZE *
+            size;
+
+        const vh =
+            innerHeight /
+            WORLD_SIZE *
+            size;
+
+
+        const vx =
+            (cameraX + HALF) *
+            scale -
+            vw / 2;
+
+        const vy =
+            (cameraY + HALF) *
+            scale -
+            vh / 2;
+
+
+        mctx.strokeStyle =
+            "rgba(255,255,255,.7)";
+
+        mctx.lineWidth = 2;
+
+
+        mctx.strokeRect(
+            vx,
+            vy,
+            vw,
+            vh
+        );
+
+    }
+
+}
+
+
+/* =========================================================
+   MESSAGE
+========================================================= */
+
+let messageTimer=null;
+
+function showMessage(text){
+
+    const el =
+        document.getElementById("message");
+
+    el.textContent=text;
+
+    el.classList.add("show");
+
+    clearTimeout(messageTimer);
+
+    messageTimer =
+        setTimeout(()=>{
+            el.classList.remove("show");
+        },2500);
+
+}
+
+
+/* =========================================================
+   RESIZE
+========================================================= */
+
+function resize(){
+
+    const dpr =
+        Math.min(devicePixelRatio||1,2);
+
+    canvas.width =
+        innerWidth*dpr;
+
+    canvas.height =
+        innerHeight*dpr;
+
+    canvas.style.width =
+        innerWidth+"px";
+
+    canvas.style.height =
+        innerHeight+"px";
+
+    ctx.setTransform(
+        dpr,
+        0,
+        0,
+        dpr,
+        0,
+        0
+    );
+
+}
+
+window.addEventListener("resize",resize);
+
+
+/* =========================================================
+   DEATH / AFK
+========================================================= */
+
+function checkAFK(){
+
+    if(!localPlayer)
+        return;
+
+    if(
+        Date.now()-localPlayer.lastActivity
+        >10*60*1000
+    ){
+
+        if(!localPlayer.dead){
+
+            localPlayer.dead=true;
+
+            localPlayer.deathUntil =
+                Date.now()+5*60*1000;
+
+            savePlayer();
+
+            showDeath();
+
+        }
+
+    }
+
+}
+
+
+function showDeath(){
+
+    document.getElementById("deathOverlay")
+        .style.display="flex";
+
+}
+
+
+function checkDeath(){
+
+    if(!localPlayer)
+        return;
+
+
+    if(!localPlayer.dead)
+        return;
+
+
+    const remaining =
+        localPlayer.deathUntil-Date.now();
+
+
+    if(remaining<=0){
+
+        respawn();
+
+        return;
+
+    }
+
+
+    const sec =
+        Math.ceil(remaining/1000);
+
+    const min =
+        Math.floor(sec/60);
+
+    const s =
+        sec%60;
+
+
+    document.getElementById("deathTimer")
+        .textContent=
+        String(min).padStart(2,"0")+
+        ":"+
+        String(s).padStart(2,"0");
+
+}
+
+
+async function respawn(){
+
+    const city =
+        cities[
+            Math.floor(
+                Math.random()*cities.length
+            )
+        ];
+
+
+    localPlayer.x=city.x;
+    localPlayer.y=city.y+300;
+
+    localPlayer.hp=100;
+
+    localPlayer.dead=false;
+
+    localPlayer.deathUntil=0;
+
+    localPlayer.lastActivity=Date.now();
+
+
+    await savePlayer();
+
+
+    document.getElementById("deathOverlay")
+        .style.display="none";
+
+}
+
+
+/* =========================================================
+   GAME LOOP
+========================================================= */
+
+function loop(){
+
+    movePlayer();
+
+    checkGate();
+
+    updateCamera();
+
+    updateCityHUD();
+
+    drawWorld();
+
+    drawMiniMap();
+
+    checkAFK();
+
+    checkDeath();
+
+    requestAnimationFrame(loop);
+
+}
+
+
+resize();
+
+requestAnimationFrame(loop);
+function isMyCity(cityId){
+    return !!(
+        localPlayer &&
+        localPlayer.unlockedCities &&
+        localPlayer.unlockedCities[cityId] === true
+    );
+}
+</script>
+
+</body>
+</html>
