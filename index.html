@@ -528,6 +528,22 @@ font-family:"Phetsarath OT","Noto Sans Lao",Arial,sans-serif;
     font-size:13px;
     font-weight:bold;
 }
+.answer{
+    min-height:65px;
+    border:2px solid #53627e;
+    border-radius:14px;
+    background:#263552;
+    color:white;
+    font-size:19px;
+    padding:12px;
+    cursor:pointer;
+
+    /* สำคัญสำหรับมือถือ */
+    touch-action:manipulation;
+    -webkit-tap-highlight-color:transparent;
+    -webkit-user-select:none;
+    user-select:none;
+}
 </style>
 </head>
 
@@ -2199,14 +2215,14 @@ button.innerHTML =
     button.className="answer";
     button.disabled=false;
 
-    button.onclick=()=>{
+button.onclick = (e) => {
+    e.preventDefault();
 
-        answerGate(
-            index,
-            shuffledChoices[index].correct
-        );
-
-    };
+    answerGate(
+        index,
+        shuffledChoices[index].correct
+    );
+};
 
 });
 
